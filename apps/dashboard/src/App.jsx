@@ -8,12 +8,9 @@ import {
   Globe,
   Terminal,
   Settings,
-  Search,
-  Bell,
   ChevronLeft,
   ChevronRight,
   LogOut,
-  HelpCircle,
   Code2,
 } from 'lucide-react';
 
@@ -22,7 +19,6 @@ import { useTheme } from './contexts/ThemeContext.jsx';
 import ThemeToggle from './components/ThemeToggle.jsx';
 
 import LandingPage from './pages/LandingPage.jsx';
-import DesignSystem from './pages/DesignSystem.jsx';
 import DashboardOverview from './pages/DashboardOverview.jsx';
 import ClientsPage from './pages/ClientsPage.jsx';
 import UsersPage from './pages/UsersPage.jsx';
@@ -43,28 +39,27 @@ function ConsoleLayout() {
 
   const navLinks = [
     { label: 'Overview', path: '/dashboard', icon: LayoutDashboard },
-    { label: 'OIDC Clients', path: '/clients', icon: Key },
-    { label: 'User Directory', path: '/users', icon: Users },
-    { label: 'Active Sessions', path: '/sessions', icon: Globe },
-    { label: 'Security Audit Logs', path: '/audit-logs', icon: Terminal },
-    { label: 'System Settings', path: '/settings', icon: Settings },
+    { label: 'OAuth Clients', path: '/clients', icon: Key },
+    { label: 'Users', path: '/users', icon: Users },
+    { label: 'Sessions', path: '/sessions', icon: Globe },
+    { label: 'Audit Logs', path: '/audit-logs', icon: Terminal },
+    { label: 'Settings', path: '/settings', icon: Settings },
   ];
 
   // Breadcrumbs Map
   const breadcrumbMap = {
     '/dashboard': 'Overview',
-    '/clients': 'OIDC Clients',
-    '/users': 'User Directory',
-    '/sessions': 'Active Sessions',
-    '/audit-logs': 'Security Audit Logs',
-    '/settings': 'System Settings',
-    '/design-system': 'Design System',
+    '/clients': 'OAuth Clients',
+    '/users': 'Users',
+    '/sessions': 'Sessions',
+    '/audit-logs': 'Audit Logs',
+    '/settings': 'Settings',
   };
   const currentBreadcrumb = breadcrumbMap[currentPath] || 'Console';
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-zinc-950 text-gray-900 dark:text-zinc-50 transition-colors duration-200 overflow-hidden">
-      {/* Redesigned Premium Collapsible Sidebar */}
+      {/* Collapsible Sidebar */}
       <motion.aside
         animate={{ width: sidebarCollapsed ? 76 : 260 }}
         transition={{ duration: 0.2, ease: 'easeInOut' }}
@@ -121,32 +116,17 @@ function ConsoleLayout() {
           </nav>
         </div>
 
-        {/* Sidebar Footer Details */}
+        {/* Sidebar Footer */}
         <div className="p-4 border-t border-gray-200 dark:border-white/5 space-y-4">
-          {/* Help Center Box (Floating Card look) */}
-          {!sidebarCollapsed && (
-            <div className="p-4 rounded-xl bg-gradient-to-br from-indigo-50/50 to-indigo-100/10 dark:from-zinc-900/60 dark:to-zinc-800/30 border border-indigo-100/50 dark:border-white/5 shadow-sm text-center">
-              <HelpCircle className="h-5 w-5 text-indigo-500 mx-auto mb-2" />
-              <h4 className="text-xs font-semibold text-gray-800 dark:text-zinc-200">Need Help?</h4>
-              <p className="text-[10px] text-gray-500 dark:text-zinc-400 mt-1">Read OIDC specs and setup instructions.</p>
-              <a
-                href="/design-system"
-                className="mt-3 inline-block w-full py-1.5 px-3 rounded-lg text-[10px] font-semibold bg-white dark:bg-zinc-900 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors shadow-xs"
-              >
-                Docs Center
-              </a>
-            </div>
-          )}
-
           {/* Profile Card */}
           <div className="flex items-center justify-between gap-2.5 px-1.5 py-1">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
-                JD
+                AD
               </div>
               {!sidebarCollapsed && (
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-gray-800 dark:text-zinc-200 truncate">John Doe</p>
+                  <p className="text-xs font-semibold text-gray-800 dark:text-zinc-200 truncate">Admin Developer</p>
                   <p className="text-[10px] text-gray-500 dark:text-zinc-400 truncate">admin@dauth.io</p>
                 </div>
               )}
@@ -175,7 +155,7 @@ function ConsoleLayout() {
 
       {/* Main Content Layout Wrapper */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Modern Top Navigation Bar */}
+        {/* Top Navigation Bar */}
         <header className="h-16 bg-white dark:bg-[#111827] border-b border-gray-200 dark:border-white/5 flex items-center justify-between px-6 z-20 relative shadow-xs">
           {/* Breadcrumb Info / Mobile Brand */}
           <div className="flex items-center gap-4">
@@ -189,42 +169,9 @@ function ConsoleLayout() {
             </div>
           </div>
 
-          {/* Operations Hub (Toggle, Notifications, Search, Profile) */}
+          {/* Theme toggle */}
           <div className="flex items-center gap-4">
-            {/* Global Search Bar Stub */}
-            <div className="relative hidden md:block max-w-xs">
-              <Search className="absolute left-3 top-2 h-3.5 w-3.5 text-gray-400 dark:text-zinc-500" />
-              <input
-                type="text"
-                placeholder="Search..."
-                disabled
-                className="pl-8 pr-12 py-1.5 w-44 rounded-lg bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-white/5 text-xs text-gray-400 dark:text-zinc-500 cursor-not-allowed"
-              />
-              <span className="absolute right-2 top-1.5 px-1.5 py-0.5 bg-gray-200 dark:bg-zinc-800 text-[9px] font-mono rounded text-gray-400 dark:text-zinc-500">
-                ⌘K
-              </span>
-            </div>
-
-            {/* Theme toggle button */}
             <ThemeToggle />
-
-            {/* Notifications Button Stub */}
-            <div className="relative">
-              <button className="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors focus:outline-none">
-                <Bell className="h-4 w-4" />
-              </button>
-              <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-indigo-500" />
-            </div>
-
-            {/* Quick Public Portal Shortcuts */}
-            <div className="flex items-center gap-3 pl-2 border-l border-gray-200 dark:border-white/5 text-xs font-semibold">
-              <Link to="/" className="text-gray-400 dark:text-zinc-500 hover:text-indigo-500 dark:hover:text-indigo-400">
-                Public Site
-              </Link>
-              <Link to="/design-system" className="text-gray-400 dark:text-zinc-500 hover:text-indigo-500 dark:hover:text-indigo-400">
-                UI Kit
-              </Link>
-            </div>
           </div>
         </header>
 
@@ -245,7 +192,6 @@ function ConsoleLayout() {
                 <Route path="/sessions" element={<SessionsPage />} />
                 <Route path="/audit-logs" element={<AuditLogsPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/design-system" element={<DesignSystem />} />
               </Routes>
             </motion.div>
           </AnimatePresence>

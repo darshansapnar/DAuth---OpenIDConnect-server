@@ -86,17 +86,17 @@ export class OidcService {
     const expiresAt = new Date();
     expiresAt.setMinutes(expiresAt.getMinutes() + 10);
 
-    const scopesArray = typeof scope === 'string' ? scope.split(' ') : scope;
+    const scopesString = Array.isArray(scope) ? scope.join(' ') : (scope || '');
 
     const authCode = await OidcRepository.createCode({
       code,
       clientId,
       userId,
       redirectUri,
-      scope: scopesArray,
+      scope: scopesString,
       expiresAt,
-      codeChallenge,
-      codeChallengeMethod,
+      codeChallenge: codeChallenge || '',
+      codeChallengeMethod: codeChallengeMethod || '',
     });
 
     return authCode;
@@ -110,9 +110,10 @@ export class OidcService {
    * @param {string} params.redirectUri
    * @param {string} params.clientId
    * @param {string} params.clientSecret
+   * @param {string} [params.codeVerifier]
    * @returns {Promise<Object>} Token Endpoint Response object
    */
-  static async exchangeCodeForTokens({ code, redirectUri, clientId, clientSecret }) {
+  static async exchangeCodeForTokens({ code, redirectUri, clientId, clientSecret, codeVerifier }) {
     // 1. Verify Client ID presence
     if (!clientId) {
       const err = new Error('Missing parameter: client_id is required.');
@@ -193,26 +194,58 @@ export class OidcService {
       throw err;
     }
 
+    // PKCE (RFC 7636) code verifier validation
+    if (authCode.codeChallenge) {
+      if (!codeVerifier) {
+        const err = new Error('Missing parameter: code_verifier is required for PKCE validation.');
+        err.status = 400;
+        err.name = 'InvalidGrant';
+        throw err;
+      }
+
+      let isValid = false;
+      if (authCode.codeChallengeMethod === 'S256') {
+        const hash = crypto.createHash('sha256').update(codeVerifier).digest();
+        const computedChallenge = hash.toString('base64url');
+        isValid = computedChallenge === authCode.codeChallenge;
+      } else if (authCode.codeChallengeMethod === 'plain' || !authCode.codeChallengeMethod) {
+        isValid = codeVerifier === authCode.codeChallenge;
+      } else {
+        const err = new Error(`Unsupported code_challenge_method: "${authCode.codeChallengeMethod}"`);
+        err.status = 400;
+        err.name = 'InvalidRequest';
+        throw err;
+      }
+
+      if (!isValid) {
+        const err = new Error('PKCE verification failed: code_verifier mismatch.');
+        err.status = 400;
+        err.name = 'InvalidGrant';
+        throw err;
+      }
+    }
+
     // 5. Mark authorization code as used immediately to mitigate replay attacks
     await OidcRepository.markAsUsed(authCode.id);
 
     const user = authCode.user;
     const requestedScopes = authCode.scope;
+    const scopesArray = typeof requestedScopes === 'string' ? requestedScopes.split(' ') : (requestedScopes || []);
 
     // 6. Generate RS256 signed Access Token
     const accessTokenClaims = {
       client_id: clientId,
-      scope: requestedScopes.join(' '),
+      scope: scopesArray.join(' '),
     };
     const accessToken = await signJwt(accessTokenClaims, user.id, clientId, '1h');
 
     // 7. Generate RS256 signed ID Token
     const idTokenClaims = {};
-    if (requestedScopes.includes('email')) {
+    if (scopesArray.includes('email')) {
       idTokenClaims.email = user.email;
       idTokenClaims.email_verified = true;
     }
-    if (requestedScopes.includes('profile')) {
+    if (scopesArray.includes('profile')) {
       idTokenClaims.name = user.name || '';
     }
     const idToken = await signJwt(idTokenClaims, user.id, clientId, '1h');
@@ -226,6 +259,7 @@ export class OidcService {
       token: rawRefreshToken,
       clientId,
       userId: user.id,
+      scope: scopesArray.join(' '),
       expiresAt: rtExpiry,
     });
 
@@ -236,7 +270,136 @@ export class OidcService {
       refresh_token: rawRefreshToken,
       token_type: 'Bearer',
       expires_in: 3600,
-      scope: requestedScopes.join(' '),
+      scope: scopesArray.join(' '),
+    };
+  }
+
+  /**
+   * Refreshes access and ID tokens using a valid refresh token.
+   *
+   * @param {Object} params
+   * @param {string} params.refreshToken
+   * @param {string} params.clientId
+   * @param {string} params.clientSecret
+   * @param {string} [params.scope]
+   * @returns {Promise<Object>} Token Endpoint Response object
+   */
+  static async refreshTokens({ refreshToken, clientId, clientSecret, scope }) {
+    // 1. Verify Client ID presence
+    if (!clientId) {
+      const err = new Error('Missing parameter: client_id is required.');
+      err.status = 400;
+      err.name = 'InvalidRequest';
+      throw err;
+    }
+
+    // 2. Fetch Client Details
+    const client = await ClientRepository.findById(clientId);
+    if (!client) {
+      const err = new Error('Client not found.');
+      err.status = 401;
+      err.name = 'InvalidClient';
+      throw err;
+    }
+
+    // 3. Match Client Secret Hash
+    if (!clientSecret) {
+      const err = new Error('Missing parameter: client_secret is required.');
+      err.status = 401;
+      err.name = 'InvalidClient';
+      throw err;
+    }
+
+    const isSecretMatch = await bcrypt.compare(clientSecret, client.clientSecret);
+    if (!isSecretMatch) {
+      const err = new Error('Invalid client credentials.');
+      err.status = 401;
+      err.name = 'InvalidClient';
+      throw err;
+    }
+
+    // 4. Retrieve Refresh Token Record
+    if (!refreshToken) {
+      const err = new Error('Missing parameter: refresh_token is required.');
+      err.status = 400;
+      err.name = 'InvalidRequest';
+      throw err;
+    }
+
+    const tokenRecord = await TokenRepository.findRefreshToken(refreshToken);
+    if (!tokenRecord) {
+      const err = new Error('Invalid refresh token.');
+      err.status = 400;
+      err.name = 'InvalidGrant';
+      throw err;
+    }
+
+    // Revocation status check
+    if (tokenRecord.revoked) {
+      const err = new Error('Refresh token has been revoked.');
+      err.status = 400;
+      err.name = 'InvalidGrant';
+      throw err;
+    }
+
+    // Expiration verification
+    if (new Date() > tokenRecord.expiresAt) {
+      const err = new Error('Refresh token has expired.');
+      err.status = 400;
+      err.name = 'InvalidGrant';
+      throw err;
+    }
+
+    // Client ID match check
+    if (tokenRecord.clientId !== clientId) {
+      const err = new Error('Client ID mismatch.');
+      err.status = 400;
+      err.name = 'InvalidGrant';
+      throw err;
+    }
+
+    const user = tokenRecord.user;
+    const originalScopes = typeof tokenRecord.scope === 'string' ? tokenRecord.scope.split(' ') : [];
+
+    // 5. Evaluate requested scope (if specified) to assert it is a subset of granted scopes
+    let activeScopes = originalScopes;
+    if (scope) {
+      const requestedScopes = scope.split(' ');
+      const isSubset = requestedScopes.every((s) => originalScopes.includes(s));
+      if (!isSubset) {
+        const err = new Error('Requested scope exceeds originally granted scopes.');
+        err.status = 400;
+        err.name = 'InvalidRequest';
+        throw err;
+      }
+      activeScopes = requestedScopes;
+    }
+
+    // 6. Generate new Access Token
+    const accessTokenClaims = {
+      client_id: clientId,
+      scope: activeScopes.join(' '),
+    };
+    const accessToken = await signJwt(accessTokenClaims, user.id, clientId, '1h');
+
+    // 7. Generate new ID Token
+    const idTokenClaims = {};
+    if (activeScopes.includes('email')) {
+      idTokenClaims.email = user.email;
+      idTokenClaims.email_verified = true;
+    }
+    if (activeScopes.includes('profile')) {
+      idTokenClaims.name = user.name || '';
+    }
+    const idToken = await signJwt(idTokenClaims, user.id, clientId, '1h');
+
+    return {
+      access_token: accessToken,
+      id_token: idToken,
+      refresh_token: refreshToken,
+      token_type: 'Bearer',
+      expires_in: 3600,
+      scope: activeScopes.join(' '),
     };
   }
 

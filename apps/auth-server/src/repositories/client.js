@@ -8,7 +8,7 @@ export class ClientRepository {
    * Retrieves all clients.
    */
   static async findAll() {
-    return prisma.oauthClient.findMany({
+    return prisma.oAuthClient.findMany({
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -17,7 +17,7 @@ export class ClientRepository {
    * Finds a unique client profile by ID.
    */
   static async findById(id) {
-    return prisma.oauthClient.findUnique({
+    return prisma.oAuthClient.findUnique({
       where: { id },
     });
   }
@@ -26,7 +26,7 @@ export class ClientRepository {
    * Persists a new client profile record.
    */
   static async create({ name, clientSecretHash, redirectUris, allowedScopes }) {
-    return prisma.oauthClient.create({
+    return prisma.oAuthClient.create({
       data: {
         name,
         clientSecret: clientSecretHash,
@@ -40,7 +40,7 @@ export class ClientRepository {
    * Updates an existing client profile details.
    */
   static async update(id, { name, redirectUris, allowedScopes }) {
-    return prisma.oauthClient.update({
+    return prisma.oAuthClient.update({
       where: { id },
       data: {
         name,
@@ -54,7 +54,7 @@ export class ClientRepository {
    * Updates the client secret hash (for secret rotation).
    */
   static async updateSecret(id, clientSecretHash) {
-    return prisma.oauthClient.update({
+    return prisma.oAuthClient.update({
       where: { id },
       data: {
         clientSecret: clientSecretHash,
@@ -66,7 +66,7 @@ export class ClientRepository {
    * Deletes a client profile.
    */
   static async delete(id) {
-    return prisma.oauthClient.delete({
+    return prisma.oAuthClient.delete({
       where: { id },
     });
   }

@@ -94,6 +94,7 @@ router.get('/login', (req, res) => {
         ${errorMessage ? `<div class="error">${errorMessage}</div>` : ''}
 
         <form action="/login" method="POST">
+          <input type="hidden" name="_csrf" value="${req.csrfToken || ''}">
           <div class="form-group">
             <label class="label" for="email">Email address</label>
             <input class="input" type="email" id="email" name="email" required placeholder="name@domain.com">

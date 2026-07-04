@@ -1,138 +1,115 @@
-# DAuth - Self-Hosted OIDC Identity Provider
+# DAuth — Self-Hosted OpenID Connect Identity Provider
 
-DAuth is a self-hosted OpenID Connect (OIDC) Identity Provider built from scratch for learning, portfolio, and educational purposes. It is designed to resemble production-grade systems like Clerk, Auth0, or Keycloak, while remaining clean, modular, and maintainable.
+DAuth is a production-inspired OIDC Identity Provider built from scratch for learning and portfolio purposes. It implements real OAuth 2.0 and OpenID Connect flows with a clean, layered architecture.
 
----
+## Tech Stack
 
-## 📖 Workspace Documentation
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | React, Vite, Tailwind CSS, React Router |
+| **Backend** | Node.js, Express.js |
+| **Database** | PostgreSQL (Neon), Prisma ORM |
+| **Auth** | jose (RS256 JWT), bcrypt, express-session |
+| **Language** | JavaScript (ES Modules) |
 
-Detailed specifications and architectural guides are available in the `docs/` folder:
+## Project Structure
 
-- **[System Architecture](file:///e:/DAuth%20-%20My%20OIDC%20Server/docs/architecture.md)**: Details the monorepo workspace configurations, layer separations, and MVC patterns.
-- **[Database Schemas](file:///e:/DAuth%20-%20My%20OIDC%20Server/docs/database.md)**: Documents tables mappings, relations, and the entity-relationship diagram.
-- **[API Specifications](file:///e:/DAuth%20-%20My%20OIDC%20Server/docs/api.md)**: Outlines endpoints, request bodies, responses, status codes, and security.
-- **[OIDC Handshake Flow](file:///e:/DAuth%20-%20My%20OIDC%20Server/docs/oidc-flow.md)**: Deep-dive sequence diagrams of Authorization Code Flow and RS256 token claims signing.
-- **[Local Deployment Setup](file:///e:/DAuth%20-%20My%20OIDC%20Server/docs/deployment.md)**: Step-by-step setup parameters, migrations, and database seeds.
-
----
-
-## 🛠️ Technology Stack
-
-### Monorepo Architecture
-
-- **Workspaces**: npm Workspaces
-- **Linter & Formatter**: ESLint (v9 flat config) & Prettier
-
-### Frontend (Apps & Packages)
-
-- **Framework**: React 18
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS & PostCSS
-- **Routing**: React Router DOM (v6)
-- **Design System**: Core components library built from scratch in `packages/ui`
-
-### Backend (`apps/auth-server`)
-
-- **Runtime**: Node.js (ES Modules)
-- **Framework**: Express.js
-- **Database ORM**: Prisma ORM
-- **Security**: `jose` (RS256 JWT signing/verifying), `bcrypt` (12-round hashing), `express-session` (secure cookie-based sessions), `helmet` (security HTTP headers), `express-rate-limit` (brute-force defense), custom Double-Submit CSRF check middleware.
-
-### Database
-
-- **Engine**: PostgreSQL (managed via Docker & Compose)
-
----
-
-## 📂 Folder Structure
-
-```text
-DAuth/
-├── apps/
-│   ├── auth-server/       # Express.js backend & OIDC Provider
-│   ├── dashboard/         # React admin console for managing clients & users
-│   └── sample-client/     # Demo application verifying OIDC integration
-├── packages/
-│   ├── ui/                # Shared React UI components (design system)
-│   └── shared/            # Shared validation helpers, constants, and utilities
-├── docs/                  # Architecture & protocol documentation
-├── docker/                # Local database compose configurations
-├── package.json           # Monorepo workspaces & devDependencies
-├── eslint.config.js       # Global ESLint configuration
-├── .prettierrc            # Global Prettier configuration
-└── .env.example           # Global environment template
+```
+apps/
+  auth-server/      # OIDC provider backend (Express)
+  dashboard/        # Admin console (React + Vite)
+  sample-client/    # Demo relying party app (React + Vite)
+packages/
+  ui/               # Shared component library
+  shared/           # Shared utilities
 ```
 
----
+## OIDC Features Implemented
 
-## 🏗️ Development Philosophy
+- **Authorization Code Flow** — Full redirect-based authentication
+- **PKCE** — Proof Key for Code Exchange (S256)
+- **Consent Screen** — Scope approval/denial before code issuance
+- **Refresh Tokens** — `grant_type=refresh_token` at `/token`
+- **Discovery Endpoint** — `GET /.well-known/openid-configuration`
+- **JWKS Endpoint** — `GET /jwks`
+- **UserInfo Endpoint** — `GET /userinfo`
+- **RS256 Token Signing** — Asymmetric JWT signatures via jose
 
-DAuth adheres to strict software engineering standards:
+## Dashboard Navigation
 
-1. **Clean Architecture**: Decoupled MVC layers (Routes → Validators → Controllers → Services → Repositories → Database). Business rules never leak into route endpoints.
-2. **Production-Grade Security**:
-   - Cryptographic hashing of passwords and client secrets via `bcrypt`.
-   - Native HTTP-only session cookies with Lax SameSite settings.
-   - JWT tokens signed using **RS256** (RSA Signature with SHA-256) via the `jose` library.
-   - Comprehensive input parameters sanitization.
-   - Custom Double-Submit Cookie CSRF protection.
-3. **Developer Experience (DX)**: Zero-friction setups, local Docker Postgres instance, database migrations, automatic seeding, and standard formatting guidelines.
+| Page | Description |
+|------|-------------|
+| **Overview** | Live stats (users, clients, tokens) and system health |
+| **OAuth Clients** | Create, view, and manage OIDC client applications |
+| **Users** | View registered user accounts |
+| **Sessions** | View active SSO sessions |
+| **Audit Logs** | Security event trail |
+| **Settings** | OIDC provider configuration and signing key details |
 
----
-
-## 🚀 Setup & Installation
+## Getting Started
 
 ### Prerequisites
 
-- Node.js `v20+` or `v22+`
-- npm `v10+`
-- Docker & Docker Compose (for PostgreSQL)
+- Node.js 18+
+- A PostgreSQL database (Neon recommended)
 
-### Initial Setup
+### Setup
 
-1. **Install dependencies** from the workspace root:
+```bash
+# 1. Clone the repository
+git clone <repo-url>
+cd DAuth
 
-   ```bash
-   npm install
-   ```
+# 2. Install dependencies
+npm install
 
-2. **Configure environment variables**:
-   Copy `.env.example` to `.env` in the root:
+# 3. Configure environment
+cp .env.example .env
+# Edit .env with your DATABASE_URL and SESSION_SECRET
 
-   ```bash
-   cp .env.example .env
-   ```
+# 4. Generate Prisma client and run migrations
+npx prisma generate --schema=apps/auth-server/prisma/schema.prisma
+npx prisma db push --schema=apps/auth-server/prisma/schema.prisma
 
-3. **Spin up the database**:
+# 5. Seed the database
+node apps/auth-server/prisma/seed.js
 
-   ```bash
-   docker compose -f docker/docker-compose.yml up -d
-   ```
+# 6. Start all services
+npm run dev
+```
 
-4. **Apply database migrations**:
+### Running Services
 
-   ```bash
-   npm run prisma:migrate -w @dauth/auth-server
-   ```
+| Service | URL |
+|---------|-----|
+| Auth Server | http://localhost:3001 |
+| Dashboard | http://localhost:5173 |
+| Sample Client | http://localhost:5174 |
 
-5. **Seed local test profiles**:
+## API Endpoints
 
-   ```bash
-   npx prisma db seed --schema=apps/auth-server/prisma/schema.prisma
-   ```
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/.well-known/openid-configuration` | OIDC Discovery |
+| `GET` | `/authorize` | Authorization endpoint |
+| `POST` | `/token` | Token exchange (auth code + refresh) |
+| `GET` | `/jwks` | JSON Web Key Set |
+| `GET` | `/userinfo` | User profile claims |
+| `GET` | `/login` | Server-rendered login form |
+| `GET` | `/consent` | Consent screen |
+| `GET` | `/api/health` | Health check with DB probe |
+| `GET` | `/api/stats/overview` | Database counts |
+| `POST` | `/api/auth/register` | User registration |
+| `GET/POST` | `/api/clients` | Client management (CRUD) |
 
-6. **Start all servers in development mode**:
-   ```bash
-   npm run dev
-   ```
+## Architecture
 
----
+```
+Routes → Controllers → Services → Repositories → Database
+```
 
-## 🗺️ Roadmap Progress
+Business logic lives in Services. Database queries live in Repositories. Route files only handle HTTP concerns.
 
-- [x] **Phase 1**: Monorepo foundation setup and tooling configuration.
-- [x] **Phase 2**: Database schemas, credentials registration, and secure session login/logout features.
-- [x] **Phase 3**: Developer Dashboard UI and backend Client Registration CRUD APIs.
-- [x] **Phase 4**: OIDC Discovery, JWKS Endpoint, Sign-In portal redirects, and parameter validations.
-- [x] **Phase 5**: Token exchange endpoint (generating signed RS256 JWT ID/Access tokens, refresh tokens).
-- [x] **Phase 6**: Complete security review, CSRF checks, rate limits, request logs, and documentation.
+## License
+
+MIT

@@ -9,6 +9,7 @@ import { env } from '#config/env.js';
 import router from '#routes/index.js';
 import oidcRouter from './routes/oidc.js';
 import loginRouter from './routes/login.js';
+import consentRouter from './routes/consent.js';
 
 import { requestLogger } from './middleware/logger.js';
 import { csrfProtection } from './middleware/csrf.js';
@@ -62,13 +63,14 @@ app.use('/api/auth/login', authLimiter);
 // 4. Strict CORS Configuration (removes wildcard CORS with credentials)
 const allowedOrigins = env.ALLOWED_ORIGINS
   ? env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:5173', 'http://localhost:5174'];
+  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3001'];
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow non-browser agents (Curl, server-to-server OIDC token query) or matching origins
-      if (!origin || allowedOrigins.includes(origin)) {
+      console.log('[DEBUG] CORS Check:', { origin, allowedOrigins });
+      // Allow non-browser agents (Curl, server-to-server OIDC token query), Same-Origin/Redirect 'null' origins, or matching origins
+      if (!origin || origin === 'null' || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         callback(new Error('Blocked by CORS policy. Origin not allowed.'));
@@ -105,6 +107,7 @@ app.use(csrfProtection);
 // 8. Mount root-level portals (OIDC handshake and self-hosted Sign-In)
 app.use(oidcRouter);
 app.use(loginRouter);
+app.use(consentRouter);
 
 // 9. Mount main API routes
 app.use('/api', router);

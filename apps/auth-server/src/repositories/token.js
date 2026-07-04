@@ -7,12 +7,13 @@ export class TokenRepository {
   /**
    * Persists a new RefreshToken record.
    */
-  static async createRefreshToken({ token, clientId, userId, expiresAt }) {
+  static async createRefreshToken({ token, clientId, userId, scope, expiresAt }) {
     return prisma.refreshToken.create({
       data: {
         token,
         clientId,
         userId,
+        scope,
         expiresAt,
       },
     });

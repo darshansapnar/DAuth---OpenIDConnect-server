@@ -535,9 +535,6 @@ async function exchangeCodeForTokens(code, verifier) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6 text-sm text-gray-500 dark:text-zinc-400">
           <span>&copy; 2026 DAuth Project. Designed for self-hosted developer integrations.</span>
           <div className="flex gap-6">
-            <Link to="/design-system" className="hover:text-gray-900 dark:hover:text-zinc-100">
-              Design System
-            </Link>
             <a href="#features" className="hover:text-gray-900 dark:hover:text-zinc-100">
               Features
             </a>

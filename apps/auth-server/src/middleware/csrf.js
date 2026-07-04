@@ -16,6 +16,7 @@ export function csrfProtection(req, res, next) {
       path: '/',
     });
   }
+  req.csrfToken = csrfToken;
 
   // 2. Exclude OIDC API endpoints (like /token) which are API-only and use Client Secrets/Basic Auth
   const isOidcApi =

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, RotateCcw, Key, Lock, ShieldCheck } from 'lucide-react';
+import { Save, Key, Lock, ShieldCheck } from 'lucide-react';
 import {
   Card,
   CardHeader,
@@ -107,9 +107,6 @@ export default function SettingsPage() {
           </CardContent>
 
           <CardFooter className="bg-gray-50 dark:bg-zinc-900/40 p-4 border-t border-gray-200 dark:border-white/5 flex justify-end gap-3">
-            <Button variant="secondary" type="button" className="flex items-center gap-1">
-              <RotateCcw className="h-4 w-4" /> Reset Changes
-            </Button>
             <Button variant="primary" type="submit" className="flex items-center gap-1">
               <Save className="h-4 w-4" /> Save Configurations
             </Button>

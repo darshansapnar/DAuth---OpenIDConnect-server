@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Clock, User, Terminal, Globe, Search, ArrowDownToLine } from 'lucide-react';
+import { Shield, Clock, User, Terminal, Globe, Search } from 'lucide-react';
 import {
   Card,
   CardHeader,
@@ -94,9 +94,6 @@ export default function AuditLogsPage() {
             Immutable audit trails monitoring account registration, logins, and OIDC token exchanges.
           </p>
         </div>
-        <Button variant="secondary" className="flex items-center gap-1.5 text-xs">
-          <ArrowDownToLine className="h-4 w-4" /> Export CSV
-        </Button>
       </div>
 
       <Card>

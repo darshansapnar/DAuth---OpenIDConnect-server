@@ -47,6 +47,16 @@ export class OidcController {
         return res.redirect('/login');
       }
 
+      // 2.5. Check if user consent has been approved for this request sequence
+      if (!req.session.consentApproved) {
+        // Cache parameters to session before redirecting to consent view
+        req.session.authRequest = req.query;
+        return res.redirect('/consent');
+      }
+
+      // Clear the temporary consent flag so future flows require explicit approval
+      delete req.session.consentApproved;
+
       // 3. Issue short-lived Authorization Code
       const authCode = await OidcService.issueAuthorizationCode({
         clientId,
@@ -78,7 +88,7 @@ export class OidcController {
     try {
       let clientId = req.body.client_id;
       let clientSecret = req.body.client_secret;
-      const { grant_type: grantType, code, redirect_uri: redirectUri } = req.body;
+      const { grant_type: grantType, code, redirect_uri: redirectUri, code_verifier: codeVerifier } = req.body;
 
       // Extract credentials from HTTP Basic Authentication header if present
       if (req.headers.authorization && req.headers.authorization.startsWith('Basic ')) {
@@ -90,21 +100,32 @@ export class OidcController {
         clientSecret = basicSecret;
       }
 
-      // Assert grant_type is authorization_code
-      if (!grantType || grantType !== 'authorization_code') {
+      // Assert grant_type is supported
+      if (!grantType || (grantType !== 'authorization_code' && grantType !== 'refresh_token')) {
         return res.status(400).json({
           error: 'unsupported_grant_type',
-          error_description: 'Only the "authorization_code" grant type is supported.',
+          error_description: 'Only the "authorization_code" and "refresh_token" grant types are supported.',
         });
       }
 
-      // Invoke OidcService to validate parameters and issue JWT/refresh tokens
-      const result = await OidcService.exchangeCodeForTokens({
-        code,
-        redirectUri,
-        clientId,
-        clientSecret,
-      });
+      let result;
+      if (grantType === 'refresh_token') {
+        const { refresh_token: refreshToken, scope } = req.body;
+        result = await OidcService.refreshTokens({
+          refreshToken,
+          clientId,
+          clientSecret,
+          scope,
+        });
+      } else {
+        result = await OidcService.exchangeCodeForTokens({
+          code,
+          redirectUri,
+          clientId,
+          clientSecret,
+          codeVerifier,
+        });
+      }
 
       // Send Standard Token Response (no-cache headers required by OIDC specs)
       res.setHeader('Cache-Control', 'no-store');
