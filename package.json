@@ -1,0 +1,26 @@
+{
+  "name": "dauth-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "DAuth - Self-Hosted OpenID Connect Identity Provider",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n server,dashboard,client -c blue,green,magenta \"npm run dev -w @dauth/auth-server\" \"npm run dev -w @dauth/dashboard\" \"npm run dev -w @dauth/sample-client\"",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^15.14.0",
+    "prettier": "^3.4.2"
+  }
+}

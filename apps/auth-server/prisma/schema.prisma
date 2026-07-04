@@ -1,0 +1,132 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String              @id @default(uuid())
+  email              String              @unique
+  passwordHash       String
+  name               String?
+  avatarUrl          String?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  sessions           Session[]
+  userSessions       UserSession[]
+  authorizationCodes AuthorizationCode[]
+  accessTokens       AccessToken[]
+  refreshTokens      RefreshToken[]
+  auditLogs          AuditLog[]
+
+  @@map("users")
+}
+
+model OAuthClient {
+  id                 String              @id @default(uuid())
+  clientSecret       String
+  name               String
+  redirectUris       String[]
+  allowedScopes      String[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  authorizationCodes AuthorizationCode[]
+  accessTokens       AccessToken[]
+  refreshTokens      RefreshToken[]
+  auditLogs          AuditLog[]
+
+  @@map("oauth_clients")
+}
+
+model AuthorizationCode {
+  id                  String      @id @default(uuid())
+  code                String      @unique
+  clientId            String
+  client              OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  redirectUri         String
+  scope               String
+  codeChallenge       String
+  codeChallengeMethod String
+  expiresAt           DateTime
+  used                Boolean     @default(false)
+  createdAt           DateTime    @default(now())
+
+  @@map("authorization_codes")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  sid       String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("sessions")
+}
+
+model UserSession {
+  id        String   @id
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userAgent String?
+  ipAddress String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("user_sessions")
+}
+
+model AccessToken {
+  id        String      @id @default(uuid())
+  jti       String      @unique
+  clientId  String
+  client    OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scope     String
+  expiresAt DateTime
+  revoked   Boolean     @default(false)
+  createdAt DateTime    @default(now())
+
+  @@map("access_tokens")
+}
+
+model RefreshToken {
+  id        String      @id @default(uuid())
+  token     String      @unique
+  clientId  String
+  client    OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scope     String
+  expiresAt DateTime
+  revoked   Boolean     @default(false)
+  createdAt DateTime    @default(now())
+
+  @@map("refresh_tokens")
+}
+
+model AuditLog {
+  id        String       @id @default(uuid())
+  userId    String?
+  user      User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  clientId  String?
+  client    OAuthClient? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  action    String
+  ipAddress String?
+  userAgent String?
+  details   Json?
+  createdAt DateTime     @default(now())
+
+  @@map("audit_logs")
+}
