@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Save, Key, Lock, ShieldCheck } from 'lucide-react';
+import { Save, Key, ShieldCheck } from 'lucide-react';
 import {
   Card,
   CardHeader,

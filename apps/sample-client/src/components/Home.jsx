@@ -48,7 +48,7 @@ export default function Home() {
     if (stored) {
       try {
         setSession(JSON.parse(stored));
-      } catch (e) {
+      } catch {
         localStorage.removeItem('dauth_session');
       }
     }

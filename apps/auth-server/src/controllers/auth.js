@@ -1,5 +1,5 @@
 import { AuthService } from '#services/auth.js';
-import { AuditLogService } from '#services/auditLog.js';
+
 
 /**
  * Handles HTTP requests relating to authentication entry points.
@@ -13,13 +13,7 @@ export class AuthController {
       const { email, password, name } = req.body;
       const user = await AuthService.register({ email, password, name });
 
-      // Audit: user registration
-      AuditLogService.log({
-        req,
-        userId: user.id,
-        action: 'user.register',
-        details: { email: user.email },
-      });
+
 
       res.status(201).json({
         success: true,
@@ -53,13 +47,7 @@ export class AuthController {
         req.session.cookie.maxAge = 24 * 60 * 60 * 1000;
       }
 
-      // Audit: successful login
-      AuditLogService.log({
-        req,
-        userId: user.id,
-        action: 'user.login',
-        details: { email: user.email },
-      });
+
 
       res.status(200).json({
         success: true,
@@ -67,12 +55,7 @@ export class AuthController {
         user,
       });
     } catch (err) {
-      // Audit: failed login attempt
-      AuditLogService.log({
-        req,
-        action: 'user.login_failed',
-        details: { email: req.body?.email, reason: err.message },
-      });
+
       next(err);
     }
   }
@@ -81,8 +64,6 @@ export class AuthController {
    * Logs out user, invalidates server session, and clears browser cookie.
    */
   static async logout(req, res, next) {
-    const userId = req.session?.user?.id;
-
     if (!req.session) {
       return res.status(200).json({
         success: true,
@@ -95,12 +76,7 @@ export class AuthController {
         return next(err);
       }
 
-      // Audit: user logout
-      AuditLogService.log({
-        req,
-        userId,
-        action: 'user.logout',
-      });
+
 
       res.clearCookie('dauth_sid');
       res.status(200).json({

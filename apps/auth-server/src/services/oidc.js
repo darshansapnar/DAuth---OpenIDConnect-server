@@ -25,6 +25,7 @@ export class OidcService {
     if (!clientId) {
       const err = new Error('Missing parameter: client_id is required.');
       err.status = 400;
+      err.shouldRedirect = false;
       throw err;
     }
 
@@ -32,6 +33,7 @@ export class OidcService {
     if (!client) {
       const err = new Error(`Unauthorized client: client_id "${clientId}" is not registered.`);
       err.status = 400;
+      err.shouldRedirect = false;
       throw err;
     }
 
@@ -39,6 +41,7 @@ export class OidcService {
     if (!redirectUri) {
       const err = new Error('Missing parameter: redirect_uri is required.');
       err.status = 400;
+      err.shouldRedirect = false;
       throw err;
     }
 
@@ -48,6 +51,7 @@ export class OidcService {
         `Redirect URI mismatch: "${redirectUri}" is not registered for this client.`
       );
       err.status = 400;
+      err.shouldRedirect = false;
       throw err;
     }
 
@@ -55,6 +59,8 @@ export class OidcService {
     if (!responseType || responseType !== 'code') {
       const err = new Error('Unsupported response_type: only "code" is allowed.');
       err.status = 400;
+      err.code = 'unsupported_response_type';
+      err.shouldRedirect = true;
       throw err;
     }
 
@@ -62,6 +68,8 @@ export class OidcService {
     if (!scope || !scope.split(' ').includes('openid')) {
       const err = new Error('Invalid scope: must include "openid" to establish OIDC handshakes.');
       err.status = 400;
+      err.code = 'invalid_scope';
+      err.shouldRedirect = true;
       throw err;
     }
 
@@ -78,9 +86,14 @@ export class OidcService {
     scope,
     codeChallenge,
     codeChallengeMethod,
+    nonce,
   }) {
     // Generate secure cryptographically random token prefix
-    const code = `dauth_code_${crypto.randomBytes(16).toString('hex')}`;
+    let code = `dauth_code_${crypto.randomBytes(16).toString('hex')}`;
+    if (nonce) {
+      const encodedNonce = Buffer.from(nonce).toString('base64url');
+      code = `${code}.${encodedNonce}`;
+    }
 
     // Set 10-minute expiration
     const expiresAt = new Date();
@@ -165,7 +178,9 @@ export class OidcService {
 
     // Single-Use protection verification
     if (authCode.used) {
-      const err = new Error('Authorization code has already been used.');
+      // In compliance with OAuth 2.0 Security BCP, revoke all active refresh tokens for this client/user
+      await TokenRepository.revokeAllForUserAndClient(authCode.userId, authCode.clientId);
+      const err = new Error('Authorization code has already been used. Revoking all sessions for security.');
       err.status = 400;
       err.name = 'InvalidGrant';
       throw err;
@@ -232,6 +247,19 @@ export class OidcService {
     const requestedScopes = authCode.scope;
     const scopesArray = typeof requestedScopes === 'string' ? requestedScopes.split(' ') : (requestedScopes || []);
 
+    // Extract nonce from authorization code suffix if present
+    let nonce = null;
+    if (authCode.code.includes('.')) {
+      const parts = authCode.code.split('.');
+      if (parts[1]) {
+        try {
+          nonce = Buffer.from(parts[1], 'base64url').toString('utf8');
+        } catch {
+          // ignore parsing issues
+        }
+      }
+    }
+
     // 6. Generate RS256 signed Access Token
     const accessTokenClaims = {
       client_id: clientId,
@@ -247,6 +275,9 @@ export class OidcService {
     }
     if (scopesArray.includes('profile')) {
       idTokenClaims.name = user.name || '';
+    }
+    if (nonce) {
+      idTokenClaims.nonce = nonce;
     }
     const idToken = await signJwt(idTokenClaims, user.id, clientId, '1h');
 

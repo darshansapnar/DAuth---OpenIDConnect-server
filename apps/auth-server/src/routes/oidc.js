@@ -19,4 +19,7 @@ router.post('/token', OidcController.token);
 // GET /userinfo
 router.get('/userinfo', validateBearerToken, OidcController.userinfo);
 
+// POST /userinfo
+router.post('/userinfo', validateBearerToken, OidcController.userinfo);
+
 export default router;

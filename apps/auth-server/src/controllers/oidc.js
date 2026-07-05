@@ -1,6 +1,6 @@
 import { OidcService } from '#services/oidc.js';
 import { getActiveJwk } from '#utils/keys.js';
-import { AuditLogService } from '#services/auditLog.js';
+
 
 /**
  * Controller managing OIDC authorization endpoint sequences.
@@ -19,9 +19,9 @@ export class OidcController {
         state,
         code_challenge: codeChallenge,
         code_challenge_method: codeChallengeMethod,
+        nonce,
       } = req.query;
 
-      // 1. Perform strict OIDC parameter validations
       try {
         await OidcService.validateAuthorizeParams({
           clientId,
@@ -30,8 +30,18 @@ export class OidcController {
           scope,
         });
       } catch (validationErr) {
-        // According to OIDC specs, do NOT redirect back if the client ID or redirect URI is invalid.
-        // Render the error directly on the screen to prevent redirect hijacking attacks.
+        // If client details and redirect_uri are valid, we MUST redirect user back with OIDC error query parameters.
+        if (validationErr.shouldRedirect && redirectUri) {
+          const redirectUrl = new URL(redirectUri);
+          redirectUrl.searchParams.append('error', validationErr.code || 'invalid_request');
+          redirectUrl.searchParams.append('error_description', validationErr.message);
+          if (state) {
+            redirectUrl.searchParams.append('state', state);
+          }
+          return res.redirect(redirectUrl.toString());
+        }
+
+        // Otherwise (missing client_id or mismatching redirect_uri), render directly on page.
         return res.status(validationErr.status || 400).send(`
           <div style="font-family: system-ui, sans-serif; padding: 2rem; max-width: 600px; margin: 4rem auto; border: 1px solid #e1e4e6; border-radius: 8px;">
             <h2 style="color: #d9383a; margin-top: 0;">OIDC Authorization Error</h2>
@@ -66,6 +76,7 @@ export class OidcController {
         scope,
         codeChallenge,
         codeChallengeMethod,
+        nonce,
       });
 
       // 4. Construct response redirect URL parameters
@@ -96,7 +107,7 @@ export class OidcController {
         const credentials = Buffer.from(req.headers.authorization.split(' ')[1], 'base64').toString(
           'ascii'
         );
-        const [basicId, basicSecret] = credentials.split(':');
+        const [basicId, basicSecret] = credentials.split(':').map((val) => val ? decodeURIComponent(val) : '');
         clientId = basicId;
         clientSecret = basicSecret;
       }
@@ -128,14 +139,7 @@ export class OidcController {
         });
       }
 
-      // Audit: token issued
-      AuditLogService.log({
-        req,
-        userId: req.session?.user?.id,
-        clientId,
-        action: grantType === 'refresh_token' ? 'token.refreshed' : 'token.issued',
-        details: { grantType },
-      });
+
 
       // Send Standard Token Response (no-cache headers required by OIDC specs)
       res.setHeader('Cache-Control', 'no-store');

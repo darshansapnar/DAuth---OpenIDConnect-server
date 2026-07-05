@@ -97,7 +97,7 @@ export default function Callback() {
     }
 
     handleCallback();
-  }, [code, state, navigate]);
+  }, [code, state, navigate, searchParams]);
 
   if (error) {
     return (

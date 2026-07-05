@@ -40,4 +40,28 @@ export class TokenRepository {
       where: { token },
     });
   }
+
+  /**
+   * Revokes a single RefreshToken (sets revoked = true).
+   */
+  static async revokeRefreshToken(token) {
+    return prisma.refreshToken.update({
+      where: { token },
+      data: { revoked: true },
+    });
+  }
+
+  /**
+   * Invalidate/revoke all active refresh tokens associated with a given user/client pair.
+   */
+  static async revokeAllForUserAndClient(userId, clientId) {
+    return prisma.refreshToken.updateMany({
+      where: {
+        userId,
+        clientId,
+        revoked: false,
+      },
+      data: { revoked: true },
+    });
+  }
 }

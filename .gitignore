@@ -34,3 +34,6 @@ lerna-debug.log*
 /apps/auth-server/prisma/*.db
 /apps/auth-server/prisma/*.db-journal
 /apps/auth-server/prisma/migrations/
+
+# Auth Server signing keys
+/apps/auth-server/keys/private.pem

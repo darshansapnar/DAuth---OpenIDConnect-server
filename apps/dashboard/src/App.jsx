@@ -6,17 +6,15 @@ import {
   Key,
   Users,
   Globe,
-  Terminal,
   Settings,
   ChevronLeft,
   ChevronRight,
   LogOut,
   Code2,
-  Play,
+  Activity,
 } from 'lucide-react';
 
 import { ThemeProvider } from './contexts/ThemeContext.jsx';
-import { useTheme } from './contexts/ThemeContext.jsx';
 import ThemeToggle from './components/ThemeToggle.jsx';
 
 import LandingPage from './pages/LandingPage.jsx';
@@ -24,9 +22,8 @@ import DashboardOverview from './pages/DashboardOverview.jsx';
 import ClientsPage from './pages/ClientsPage.jsx';
 import UsersPage from './pages/UsersPage.jsx';
 import SessionsPage from './pages/SessionsPage.jsx';
-import AuditLogsPage from './pages/AuditLogsPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
-import OidcPlayground from './pages/OidcPlayground.jsx';
+import SystemHealth from './pages/SystemHealth.jsx';
 
 function ConsoleLayout() {
   const location = useLocation();
@@ -36,28 +33,24 @@ function ConsoleLayout() {
   // 1. Collapsible Sidebar State
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
 
-  // 2. Theme from shared context
-  const { theme } = useTheme();
 
   const navLinks = [
-    { label: 'Overview', path: '/dashboard', icon: LayoutDashboard },
-    { label: 'OAuth Clients', path: '/clients', icon: Key },
-    { label: 'OIDC Playground', path: '/playground', icon: Play },
+    { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { label: 'Users', path: '/users', icon: Users },
+    { label: 'OAuth Clients', path: '/clients', icon: Key },
     { label: 'Sessions', path: '/sessions', icon: Globe },
-    { label: 'Audit Logs', path: '/audit-logs', icon: Terminal },
     { label: 'Settings', path: '/settings', icon: Settings },
+    { label: 'System Health', path: '/health', icon: Activity },
   ];
 
   // Breadcrumbs Map
   const breadcrumbMap = {
-    '/dashboard': 'Overview',
-    '/clients': 'OAuth Clients',
-    '/playground': 'OIDC Playground',
+    '/dashboard': 'Dashboard',
     '/users': 'Users',
+    '/clients': 'OAuth Clients',
     '/sessions': 'Sessions',
-    '/audit-logs': 'Audit Logs',
     '/settings': 'Settings',
+    '/health': 'System Health',
   };
   const currentBreadcrumb = breadcrumbMap[currentPath] || 'Console';
 
@@ -190,13 +183,12 @@ function ConsoleLayout() {
               transition={{ duration: 0.15 }}
             >
               <Routes>
-                <Route path="/dashboard" element={<DashboardOverview />} />
-                <Route path="/clients" element={<ClientsPage />} />
-                <Route path="/playground" element={<OidcPlayground />} />
-                <Route path="/users" element={<UsersPage />} />
-                <Route path="/sessions" element={<SessionsPage />} />
-                <Route path="/audit-logs" element={<AuditLogsPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
+                 <Route path="/dashboard" element={<DashboardOverview />} />
+                 <Route path="/users" element={<UsersPage />} />
+                 <Route path="/clients" element={<ClientsPage />} />
+                 <Route path="/sessions" element={<SessionsPage />} />
+                 <Route path="/settings" element={<SettingsPage />} />
+                 <Route path="/health" element={<SystemHealth />} />
               </Routes>
             </motion.div>
           </AnimatePresence>

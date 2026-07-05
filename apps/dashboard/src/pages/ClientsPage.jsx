@@ -1,18 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import {
   Plus,
-  Key,
   Copy,
   Edit2,
   Trash2,
   RefreshCw,
   MoreVertical,
   Search,
-  CheckCircle,
-  ExternalLink,
-  Shield,
-  Eye,
 } from 'lucide-react';
 import {
   Button,

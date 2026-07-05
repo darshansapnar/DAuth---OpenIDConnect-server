@@ -13,7 +13,6 @@ import {
   TableHead,
   TableBody,
   TableCell,
-  Badge,
 } from '@dauth/ui';
 
 const AUTH_SERVER = 'http://localhost:3001';

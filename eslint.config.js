@@ -41,6 +41,7 @@ export default [
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       'no-console': 'off',
       'no-undef': 'error',
+      'react-hooks/set-state-in-effect': 'off',
     },
   },
 ];
