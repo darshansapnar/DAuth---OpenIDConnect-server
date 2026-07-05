@@ -1,0 +1,2 @@
+# Ignore private key PEM file to prevent committing to source control
+private.pem

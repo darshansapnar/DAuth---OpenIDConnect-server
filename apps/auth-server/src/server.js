@@ -1,5 +1,9 @@
 import app from './app.js';
 import { env } from '#config/env.js';
+import { KeyManagerService } from '#services/keyManager.js';
+
+// Initialize cryptographic keys before server listening
+KeyManagerService.initialize();
 
 const port = env.PORT;
 

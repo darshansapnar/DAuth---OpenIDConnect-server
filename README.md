@@ -114,6 +114,26 @@ Routes → Controllers → Services → Repositories → Database
 
 Business logic lives in Services. Database queries live in Repositories. Route files only handle HTTP concerns.
 
+## RSA Key Management
+
+DAuth automatically manages the RSA keys used to sign ID Tokens (`RS256` algorithm).
+
+### How keys are generated
+On server startup, `KeyManagerService` checks for existing keys:
+- If `apps/auth-server/keys/private.pem` and `public.pem` already exist, they are loaded.
+- If they do not exist, a new 2048-bit RSA key pair is generated using Node's `crypto` library and stored on disk.
+- If generation fails, server startup is halted with a fatal error.
+
+### Where keys are stored
+- Private Key: `apps/auth-server/keys/private.pem` (ignored by Git, never commit this to repository control).
+- Public Key: `apps/auth-server/keys/public.pem`.
+
+### How to rotate keys in the future
+To rotate keys manually:
+1. Delete the files `private.pem` and `public.pem` in `apps/auth-server/keys/`.
+2. Restart the auth server. A new key pair will automatically be generated and saved.
+*Note: Rotating keys will invalidate all previously signed JWT tokens (such as ID Tokens) since the verification signature has changed.*
+
 ## License
 
 MIT

@@ -1,12 +1,15 @@
-import crypto from 'crypto';
 import * as jose from 'jose';
-
-// Programmatically generate RSA 2048 keypair in memory during startup
-const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
-  modulusLength: 2048,
-});
+import { KeyManagerService } from '#services/keyManager.js';
 
 const KEY_ID = 'dauth_rsa_active_key';
+
+// Load keys from disk-backed KeyManagerService
+const privateKeyPem = KeyManagerService.getPrivateKey();
+const publicKeyPem = KeyManagerService.getPublicKey();
+
+// Import PEM strings into jose KeyLike objects using top-level await
+const privateKey = await jose.importPKCS8(privateKeyPem, 'RS256');
+const publicKey = await jose.importSPKI(publicKeyPem, 'RS256');
 
 /**
  * Signs a JWT payload using RS256 with the persistent private key.

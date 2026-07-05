@@ -12,6 +12,7 @@ import {
   ChevronRight,
   LogOut,
   Code2,
+  Play,
 } from 'lucide-react';
 
 import { ThemeProvider } from './contexts/ThemeContext.jsx';
@@ -25,6 +26,7 @@ import UsersPage from './pages/UsersPage.jsx';
 import SessionsPage from './pages/SessionsPage.jsx';
 import AuditLogsPage from './pages/AuditLogsPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
+import OidcPlayground from './pages/OidcPlayground.jsx';
 
 function ConsoleLayout() {
   const location = useLocation();
@@ -40,6 +42,7 @@ function ConsoleLayout() {
   const navLinks = [
     { label: 'Overview', path: '/dashboard', icon: LayoutDashboard },
     { label: 'OAuth Clients', path: '/clients', icon: Key },
+    { label: 'OIDC Playground', path: '/playground', icon: Play },
     { label: 'Users', path: '/users', icon: Users },
     { label: 'Sessions', path: '/sessions', icon: Globe },
     { label: 'Audit Logs', path: '/audit-logs', icon: Terminal },
@@ -50,6 +53,7 @@ function ConsoleLayout() {
   const breadcrumbMap = {
     '/dashboard': 'Overview',
     '/clients': 'OAuth Clients',
+    '/playground': 'OIDC Playground',
     '/users': 'Users',
     '/sessions': 'Sessions',
     '/audit-logs': 'Audit Logs',
@@ -188,6 +192,7 @@ function ConsoleLayout() {
               <Routes>
                 <Route path="/dashboard" element={<DashboardOverview />} />
                 <Route path="/clients" element={<ClientsPage />} />
+                <Route path="/playground" element={<OidcPlayground />} />
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/sessions" element={<SessionsPage />} />
                 <Route path="/audit-logs" element={<AuditLogsPage />} />

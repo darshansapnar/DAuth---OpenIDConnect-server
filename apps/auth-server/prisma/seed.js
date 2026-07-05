@@ -31,13 +31,16 @@ async function main() {
 
   const client = await prisma.oAuthClient.upsert({
     where: { id: clientId },
-    update: {},
+    update: {
+      redirectUris: ['http://localhost:5174/callback', 'http://localhost:5173/playground'],
+      allowedScopes: ['openid', 'profile', 'email', 'offline_access'],
+    },
     create: {
       id: clientId,
       name: clientName,
       clientSecret: secretHash,
-      redirectUris: ['http://localhost:5174/callback'],
-      allowedScopes: ['openid', 'profile', 'email'],
+      redirectUris: ['http://localhost:5174/callback', 'http://localhost:5173/playground'],
+      allowedScopes: ['openid', 'profile', 'email', 'offline_access'],
     },
   });
   console.log(`- OAuth Client seeded: ${client.name} (ID: ${client.id})`);
