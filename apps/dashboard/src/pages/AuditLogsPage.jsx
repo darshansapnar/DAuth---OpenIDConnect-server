@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Shield, Clock, User, Terminal, Globe, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Clock, User, Terminal, Globe, Search, Loader2, XCircle, RefreshCw } from 'lucide-react';
 import {
   Card,
   CardHeader,
@@ -17,70 +17,82 @@ import {
   Button,
 } from '@dauth/ui';
 
+const AUTH_SERVER = 'http://localhost:3001';
+
+/**
+ * Maps audit log action names to a display status for badge coloring.
+ */
+const getActionStatus = (action) => {
+  if (action.includes('failed') || action.includes('denied')) return 'danger';
+  if (action.includes('rotated') || action.includes('revoked')) return 'warning';
+  return 'success';
+};
+
 export default function AuditLogsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [logs, setLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const logs = [
-    {
-      id: '1',
-      time: '2026-07-04 15:10:22',
-      action: 'user.login',
-      actor: 'bob.dev@dauth.io',
-      target: 'Dashboard Console',
-      ip: '127.0.0.1',
-      status: 'success',
-    },
-    {
-      id: '2',
-      time: '2026-07-04 15:05:43',
-      action: 'token.issued',
-      actor: 'alice.smith@example.com',
-      target: 'Sample OIDC Client',
-      ip: '192.168.1.45',
-      status: 'success',
-    },
-    {
-      id: '3',
-      time: '2026-07-04 14:59:12',
-      action: 'client.secret_rotated',
-      actor: 'bob.dev@dauth.io',
-      target: 'Billing Gateway API',
-      ip: '127.0.0.1',
-      status: 'warning',
-    },
-    {
-      id: '4',
-      time: '2026-07-04 14:12:05',
-      action: 'oauth.authorize_failed',
-      actor: 'unknown',
-      target: 'Sample OIDC Client',
-      ip: '203.0.113.88',
-      status: 'danger',
-    },
-    {
-      id: '5',
-      time: '2026-07-04 13:44:59',
-      action: 'user.register',
-      actor: 'alice.smith@example.com',
-      target: 'Local Database',
-      ip: '192.168.1.45',
-      status: 'success',
-    },
-  ];
+  async function fetchLogs() {
+    try {
+      setLoading(true);
+      const res = await fetch(`${AUTH_SERVER}/api/audit-logs`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch audit logs');
+      const data = await res.json();
+      setLogs(data.logs || []);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchLogs();
+  }, []);
 
   // Filter logs based on search query and status filter
   const filteredLogs = logs.filter((log) => {
+    const status = getActionStatus(log.action);
+    const actor = log.user?.email || 'system';
+    const target = log.client?.name || '—';
+
     const matchesSearch =
       log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.actor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.target.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.ip.includes(searchTerm);
+      actor.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      target.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (log.ipAddress || '').includes(searchTerm);
 
-    const matchesStatus = statusFilter === 'all' || log.status === statusFilter;
+    const matchesStatus = statusFilter === 'all' || status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
+        <span className="ml-2 text-sm text-gray-500 dark:text-zinc-400">Loading audit logs...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <XCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
+            Make sure the Auth Server is running and you are logged in.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -88,19 +100,22 @@ export default function AuditLogsPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-zinc-50">
-            Security Audit Logs
+            Audit Logs
           </h1>
           <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1">
-            Immutable audit trails monitoring account registration, logins, and OIDC token exchanges.
+            Immutable audit trail of authentication events, token exchanges, and consent decisions.
           </p>
         </div>
+        <Button variant="secondary" onClick={fetchLogs} className="flex items-center gap-1.5 text-xs">
+          <RefreshCw className="h-3.5 w-3.5" /> Refresh
+        </Button>
       </div>
 
       <Card>
         <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-gray-100 dark:border-white/5">
           <div>
-            <CardTitle>System Logs</CardTitle>
-            <CardDescription>Security events tracked by the DAuth middleware layers.</CardDescription>
+            <CardTitle>Event Log</CardTitle>
+            <CardDescription>{logs.length} events tracked.</CardDescription>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-3 max-w-md w-full">
@@ -110,10 +125,10 @@ export default function AuditLogsPage() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className="px-3 py-2 text-sm rounded-lg bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-white/5 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
-              <option value="all">All Statuses</option>
+              <option value="all">All Events</option>
               <option value="success">Success</option>
               <option value="warning">Warning</option>
-              <option value="danger">Danger</option>
+              <option value="danger">Errors</option>
             </select>
 
             {/* Search bar */}
@@ -132,7 +147,9 @@ export default function AuditLogsPage() {
         <CardContent className="p-0">
           {filteredLogs.length === 0 ? (
             <div className="p-12 text-center text-sm text-gray-500 dark:text-zinc-400">
-              No audit logs match your query.
+              {logs.length === 0
+                ? 'No audit events recorded yet. Events will appear after authentication actions.'
+                : 'No audit logs match your query.'}
             </div>
           ) : (
             <TableContainer className="border-0 rounded-none">
@@ -142,56 +159,51 @@ export default function AuditLogsPage() {
                     <TableHead>Timestamp</TableHead>
                     <TableHead>Action</TableHead>
                     <TableHead>Actor</TableHead>
-                    <TableHead>Target Resource</TableHead>
+                    <TableHead>Client</TableHead>
                     <TableHead>IP Address</TableHead>
                     <TableHead>Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredLogs.map((log) => (
-                    <TableRow key={log.id}>
-                      <TableCell className="text-xs text-gray-400 dark:text-zinc-400 font-mono">
-                        <div className="flex items-center gap-1.5">
-                          <Clock className="h-3.5 w-3.5" />
-                          <span>{log.time}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-semibold text-xs text-gray-950 dark:text-zinc-50 font-mono">
-                        <div className="flex items-center gap-1.5">
-                          <Terminal className="h-3.5 w-3.5 text-indigo-500" />
-                          <span>{log.action}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm text-gray-700 dark:text-zinc-300">
-                        <div className="flex items-center gap-1.5">
-                          <User className="h-3.5 w-3.5 text-gray-400" />
-                          <span>{log.actor}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-xs text-gray-500 dark:text-zinc-400">
-                        {log.target}
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-gray-400 dark:text-zinc-500">
-                        <div className="flex items-center gap-1">
-                          <Globe className="h-3.5 w-3.5" />
-                          <span>{log.ip}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            log.status === 'success'
-                              ? 'success'
-                              : log.status === 'warning'
-                                ? 'warning'
-                                : 'danger'
-                          }
-                        >
-                          {log.status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {filteredLogs.map((log) => {
+                    const status = getActionStatus(log.action);
+                    return (
+                      <TableRow key={log.id}>
+                        <TableCell className="text-xs text-gray-400 dark:text-zinc-400 font-mono">
+                          <div className="flex items-center gap-1.5">
+                            <Clock className="h-3.5 w-3.5" />
+                            <span>{new Date(log.createdAt).toLocaleString()}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-semibold text-xs text-gray-950 dark:text-zinc-50 font-mono">
+                          <div className="flex items-center gap-1.5">
+                            <Terminal className="h-3.5 w-3.5 text-indigo-500" />
+                            <span>{log.action}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-gray-700 dark:text-zinc-300">
+                          <div className="flex items-center gap-1.5">
+                            <User className="h-3.5 w-3.5 text-gray-400" />
+                            <span>{log.user?.email || 'anonymous'}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs text-gray-500 dark:text-zinc-400">
+                          {log.client?.name || '—'}
+                        </TableCell>
+                        <TableCell className="font-mono text-xs text-gray-400 dark:text-zinc-500">
+                          <div className="flex items-center gap-1">
+                            <Globe className="h-3.5 w-3.5" />
+                            <span>{log.ipAddress || '—'}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={status}>
+                            {status === 'danger' ? 'error' : status === 'warning' ? 'warning' : 'success'}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </TableContainer>

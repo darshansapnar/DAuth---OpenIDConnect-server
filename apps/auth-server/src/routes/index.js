@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import authRouter from './auth.js';
 import clientRouter from './client.js';
+import userRouter from './user.js';
+import sessionRouter from './session.js';
+import auditLogRouter from './auditLog.js';
 import { requireAuth } from '#middleware/auth.js';
 import { prisma } from '../config/db.js';
 
@@ -11,6 +14,15 @@ router.use('/auth', authRouter);
 
 // Mount OAuth Clients management routes (Protected)
 router.use('/clients', requireAuth, clientRouter);
+
+// Mount User Directory routes (Protected)
+router.use('/users', requireAuth, userRouter);
+
+// Mount Session Management routes (Protected)
+router.use('/sessions', requireAuth, sessionRouter);
+
+// Mount Audit Logs routes (Protected)
+router.use('/audit-logs', requireAuth, auditLogRouter);
 
 // Health check endpoint (includes database connectivity probe)
 router.get('/health', async (_req, res) => {

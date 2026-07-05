@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Search, UserCheck, UserMinus, Calendar, Mail, ShieldAlert } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Mail, Calendar, Loader2, XCircle } from 'lucide-react';
 import {
   Card,
   CardHeader,
@@ -15,65 +14,71 @@ import {
   TableBody,
   TableCell,
   Badge,
-  Button,
 } from '@dauth/ui';
+
+const AUTH_SERVER = 'http://localhost:3001';
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [users, setUsers] = useState([
-    {
-      id: '1',
-      name: 'Alice Smith',
-      email: 'alice.smith@example.com',
-      role: 'End User',
-      joined: 'Jul 04, 2026',
-      status: 'active',
-    },
-    {
-      id: '2',
-      name: 'Developer Bob',
-      email: 'bob.dev@dauth.io',
-      role: 'Administrator',
-      joined: 'Jul 03, 2026',
-      status: 'active',
-    },
-    {
-      id: '3',
-      name: 'Sarah Connor',
-      email: 'sarah@skynet.com',
-      role: 'End User',
-      joined: 'Jun 28, 2026',
-      status: 'suspended',
-    },
-  ]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const toggleBlock = (userId) => {
-    setUsers(
-      users.map((u) => {
-        if (u.id === userId) {
-          return { ...u, status: u.status === 'active' ? 'suspended' : 'active' };
-        }
-        return u;
-      })
-    );
-  };
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const res = await fetch(`${AUTH_SERVER}/api/users`, { credentials: 'include' });
+        if (!res.ok) throw new Error('Failed to fetch users');
+        const data = await res.json();
+        setUsers(data.users || []);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchUsers();
+  }, []);
 
   // Filter user directory listings
   const filteredUsers = users.filter(
     (u) =>
-      u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (u.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-6 w-6 animate-spin text-indigo-500" />
+        <span className="ml-2 text-sm text-gray-500 dark:text-zinc-400">Loading users...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <XCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
+            Make sure the Auth Server is running and you are logged in.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
       {/* Page Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-zinc-50">
-          Users Directory
+          Users
         </h1>
         <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1">
-          Monitor user accounts, roles authorization, and account states.
+          Registered user accounts in the authentication server database.
         </p>
       </div>
 
@@ -82,7 +87,7 @@ export default function UsersPage() {
           <div>
             <CardTitle>User Directory</CardTitle>
             <CardDescription>
-              Registered user profiles inside the authentication server database.
+              {users.length} registered {users.length === 1 ? 'user' : 'users'}.
             </CardDescription>
           </div>
           {/* Search bar */}
@@ -90,7 +95,7 @@ export default function UsersPage() {
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 dark:text-zinc-500" />
             <input
               type="text"
-              placeholder="Search user profile..."
+              placeholder="Search by name or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-9 pr-4 py-2 w-full text-sm rounded-lg bg-gray-50 dark:bg-zinc-900/50 border border-gray-200 dark:border-white/5 text-gray-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
@@ -100,26 +105,26 @@ export default function UsersPage() {
         <CardContent className="p-0">
           {filteredUsers.length === 0 ? (
             <div className="p-12 text-center text-sm text-gray-500 dark:text-zinc-400">
-              No user profiles match your query.
+              {users.length === 0
+                ? 'No users have registered yet.'
+                : 'No users match your search.'}
             </div>
           ) : (
             <TableContainer className="border-0 rounded-none">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>User Name</TableHead>
-                    <TableHead>Email Address</TableHead>
-                    <TableHead>System Role</TableHead>
-                    <TableHead>Joined Date</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Registered</TableHead>
+                    <TableHead>User ID</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredUsers.map((usr) => (
                     <TableRow key={usr.id}>
                       <TableCell className="font-semibold text-gray-900 dark:text-zinc-100">
-                        {usr.name}
+                        {usr.name || '—'}
                       </TableCell>
                       <TableCell className="text-gray-600 dark:text-zinc-300 font-mono text-xs">
                         <div className="flex items-center gap-1.5">
@@ -127,41 +132,14 @@ export default function UsersPage() {
                           <span>{usr.email}</span>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant={usr.role === 'Administrator' ? 'primary' : 'default'} className="text-[10px] px-2">
-                          {usr.role}
-                        </Badge>
-                      </TableCell>
                       <TableCell className="text-xs text-gray-400 dark:text-zinc-400">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-3.5 w-3.5" />
-                          <span>{usr.joined}</span>
+                          <span>{new Date(usr.createdAt).toLocaleDateString()}</span>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant={usr.status === 'active' ? 'success' : 'danger'}>
-                          {usr.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => toggleBlock(usr.id)}
-                          className="flex items-center gap-1 ml-auto"
-                        >
-                          {usr.status === 'active' ? (
-                            <>
-                              <UserMinus className="h-3.5 w-3.5 text-red-500" />
-                              <span>Suspend</span>
-                            </>
-                          ) : (
-                            <>
-                              <UserCheck className="h-3.5 w-3.5 text-green-500" />
-                              <span>Activate</span>
-                            </>
-                          )}
-                        </Button>
+                      <TableCell className="font-mono text-[10px] text-gray-400 dark:text-zinc-500">
+                        {usr.id.substring(0, 8)}...
                       </TableCell>
                     </TableRow>
                   ))}

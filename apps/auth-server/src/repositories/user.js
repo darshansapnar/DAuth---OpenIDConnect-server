@@ -5,6 +5,23 @@ import { prisma } from '#config/db.js';
  */
 export class UserRepository {
   /**
+   * Fetches all user profiles without sensitive data.
+   * @returns {Promise<Array>}
+   */
+  static async findAll() {
+    return prisma.user.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  /**
    * Finds a unique user profile by their normalized email address.
    * @param {string} email
    * @returns {Promise<Object|null>}

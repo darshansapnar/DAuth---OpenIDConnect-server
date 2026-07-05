@@ -99,6 +99,10 @@ npm run dev
 | `GET` | `/consent` | Consent screen |
 | `GET` | `/api/health` | Health check with DB probe |
 | `GET` | `/api/stats/overview` | Database counts |
+| `GET` | `/api/users` | List registered users |
+| `GET` | `/api/sessions` | List active sessions |
+| `DELETE` | `/api/sessions/:id` | Revoke a session |
+| `GET` | `/api/audit-logs` | List audit log entries |
 | `POST` | `/api/auth/register` | User registration |
 | `GET/POST` | `/api/clients` | Client management (CRUD) |
 

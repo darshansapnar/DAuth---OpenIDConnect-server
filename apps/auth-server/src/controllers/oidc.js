@@ -1,5 +1,6 @@
 import { OidcService } from '#services/oidc.js';
 import { getActiveJwk } from '#utils/keys.js';
+import { AuditLogService } from '#services/auditLog.js';
 
 /**
  * Controller managing OIDC authorization endpoint sequences.
@@ -126,6 +127,15 @@ export class OidcController {
           codeVerifier,
         });
       }
+
+      // Audit: token issued
+      AuditLogService.log({
+        req,
+        userId: req.session?.user?.id,
+        clientId,
+        action: grantType === 'refresh_token' ? 'token.refreshed' : 'token.issued',
+        details: { grantType },
+      });
 
       // Send Standard Token Response (no-cache headers required by OIDC specs)
       res.setHeader('Cache-Control', 'no-store');

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { ClientRepository } from '#repositories/client.js';
+import { AuditLogService } from '#services/auditLog.js';
 
 const router = Router();
 
@@ -185,6 +186,15 @@ router.post('/consent', async (req, res, next) => {
       // 1. Grant consent approval flag for the current sequence
       req.session.consentApproved = true;
 
+      // Audit: consent approved
+      AuditLogService.log({
+        req,
+        userId: req.session.user.id,
+        clientId: authParams.client_id,
+        action: 'consent.approved',
+        details: { scope: authParams.scope },
+      });
+
       // 2. Save session explicitly before redirecting to avoid race condition
       req.session.save((err) => {
         if (err) return next(err);
@@ -194,6 +204,15 @@ router.post('/consent', async (req, res, next) => {
     } else {
       // 3. Clean up the cached request variables
       delete req.session.authRequest;
+
+      // Audit: consent denied
+      AuditLogService.log({
+        req,
+        userId: req.session.user.id,
+        clientId: authParams.client_id,
+        action: 'consent.denied',
+        details: { scope: authParams.scope },
+      });
 
       // 4. Save session explicitly before redirecting
       req.session.save((err) => {
