@@ -10,6 +10,7 @@ import router from '#routes/index.js';
 import oidcRouter from './routes/oidc.js';
 import loginRouter from './routes/login.js';
 import consentRouter from './routes/consent.js';
+import registerRouter from './routes/register.js';
 
 import { requestLogger } from './middleware/logger.js';
 import { csrfProtection } from './middleware/csrf.js';
@@ -27,6 +28,7 @@ app.use(
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'"], // Required to support styled backend portals
         scriptSrc: ["'self'", "'unsafe-inline'"],
+        formAction: ["'self'", "*"], // Allow form redirection to OIDC client callback URIs
       },
     },
   })
@@ -108,6 +110,7 @@ app.use(csrfProtection);
 app.use(oidcRouter);
 app.use(loginRouter);
 app.use(consentRouter);
+app.use(registerRouter);
 
 // 9. Mount main API routes
 app.use('/api', router);

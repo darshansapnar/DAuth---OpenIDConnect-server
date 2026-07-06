@@ -119,6 +119,22 @@ npx prisma db seed --schema=apps/auth-server/prisma/schema.prisma
 
 ---
 
+## Creating and Using Accounts
+
+### Public User Registration
+New user accounts can be registered directly from the web interface:
+1. When navigating to the login page (e.g. during a sign-in prompt or by visiting `http://localhost:3001/login`), click the **"Create one"** link below the sign-in form.
+2. Fill out your details: **Full Name**, **Email Address**, and a secure **Password** (minimum 8 characters).
+3. Click **"Create Account"** to submit.
+4. You will be redirected back to the login page showing a confirmation message: *"Account created successfully. Please sign in."*
+
+### Signing In
+Once registered, the newly created account credentials can be used immediately to:
+* Authorize client applications (like the **Sample Client** running at `http://localhost:5174`).
+* Sign in and view the user database directory inside the **Dashboard Console** (`http://localhost:5173`).
+
+---
+
 ## Running the Project
 
 Start the development servers for all three workspace directories (Auth Server, Dashboard, and Sample Client) concurrently:
