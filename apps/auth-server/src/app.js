@@ -6,6 +6,8 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 
 import { env } from '#config/env.js';
+import { PrismaSessionStore } from '@quixo3/prisma-session-store';
+import { prisma } from '#config/db.js';
 import router from '#routes/index.js';
 import oidcRouter from './routes/oidc.js';
 import loginRouter from './routes/login.js';
@@ -91,6 +93,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(env.SESSION_SECRET));
 app.use(
   session({
+    store: new PrismaSessionStore(prisma, {
+      checkPeriod: 2 * 60 * 1000,
+      dbRecordIdFunction: undefined,
+      dbRecordIdIsSessionId: true,
+      sessionModelName: 'expressSession',
+    }),
     name: 'dauth_sid',
     secret: env.SESSION_SECRET,
     resave: false,

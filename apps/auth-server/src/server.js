@@ -7,7 +7,7 @@ KeyManagerService.initialize();
 
 const port = env.PORT;
 
-app.listen(port, () => {
+app.listen(port, '127.0.0.1', () => {
   console.log(`[SERVER] DAuth Auth Server listening on port ${port} in ${env.NODE_ENV} mode.`);
   console.log(`[SERVER] Health endpoint: http://localhost:${port}/api/health`);
 });

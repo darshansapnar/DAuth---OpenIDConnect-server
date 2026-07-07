@@ -130,3 +130,14 @@ model AuditLog {
 
   @@map("audit_logs")
 }
+
+model ExpressSession {
+  id        String   @id @default(uuid())
+  sid       String   @unique
+  data      String   @db.Text
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("express_sessions")
+}

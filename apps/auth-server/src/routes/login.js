@@ -32,6 +32,17 @@ router.get('/login', (req, res) => {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Sign In - DAuth</title>
+      <script>
+        (function() {
+          const savedTheme = localStorage.getItem('dauth-theme');
+          const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        })();
+      </script>
       <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -42,21 +53,28 @@ router.get('/login', (req, res) => {
           align-items: center;
           justify-content: center;
           min-height: 100vh;
+          transition: background-color 0.3s ease, color 0.3s ease;
         }
         .container {
+          position: relative;
           width: 100%;
           max-width: 400px;
           padding: 2.5rem 2rem;
           background: #ffffff;
-          border: 1px solid #e2e8f0;
+          border: 1px solid rgba(37, 99, 235, 0.12);
           border-radius: 8px;
-          box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+          box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 8px -1px rgba(0, 0, 0, 0.03);
+          transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .container:hover {
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 16px -6px rgba(37, 99, 235, 0.04);
+          border-color: rgba(37, 99, 235, 0.22);
         }
         .header { text-align: center; margin-bottom: 2rem; }
-        .logo { font-size: 1.5rem; font-weight: bold; color: #1e3a8a; letter-spacing: -0.025em; }
-        .subtitle { font-size: 0.875rem; color: #64748b; margin-top: 0.5rem; }
+        .logo { font-size: 1.5rem; font-weight: bold; color: #1e3a8a; letter-spacing: -0.025em; transition: color 0.3s ease; }
+        .subtitle { font-size: 0.875rem; color: #64748b; margin-top: 0.5rem; transition: color 0.3s ease; }
         .form-group { margin-bottom: 1.25rem; }
-        .label { display: block; font-size: 0.875rem; font-weight: 500; color: #334155; margin-bottom: 0.5rem; }
+        .label { display: block; font-size: 0.875rem; font-weight: 500; color: #334155; margin-bottom: 0.5rem; transition: color 0.3s ease; }
         .input {
           width: 100%;
           padding: 0.625rem 0.875rem;
@@ -64,11 +82,16 @@ router.get('/login', (req, res) => {
           border: 1px solid #cbd5e1;
           border-radius: 6px;
           outline: none;
-          transition: border-color 0.15s ease;
+          background-color: #ffffff;
+          color: #0f172a;
+          transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.3s ease, color 0.3s ease;
         }
-        .input:focus { border-color: #2563eb; }
+        .input:focus { 
+          border-color: #2563eb; 
+          box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
         .checkbox-group { display: flex; align-items: center; gap: 0.5rem; margin: 1rem 0; }
-        .checkbox-label { font-size: 0.875rem; color: #475569; user-select: none; }
+        .checkbox-label { font-size: 0.875rem; color: #475569; user-select: none; transition: color 0.3s ease; }
         .btn {
           width: 100%;
           padding: 0.625rem;
@@ -79,9 +102,10 @@ router.get('/login', (req, res) => {
           border: none;
           border-radius: 6px;
           cursor: pointer;
-          transition: background-color 0.15s ease;
+          transition: background-color 0.15s ease, transform 0.1s ease;
         }
         .btn:hover { background-color: #1d4ed8; }
+        .btn:active { transform: scale(0.98); }
         .btn-google {
           width: 100%;
           padding: 0.625rem;
@@ -98,11 +122,12 @@ router.get('/login', (req, res) => {
           gap: 0.5rem;
           text-decoration: none;
           margin-top: 1rem;
-          transition: background-color 0.15s ease;
+          transition: background-color 0.15s ease, transform 0.1s ease, border-color 0.3s ease;
         }
         .btn-google:hover {
           background-color: #f9fafb;
         }
+        .btn-google:active { transform: scale(0.98); }
         .divider {
           display: flex;
           align-items: center;
@@ -117,6 +142,7 @@ router.get('/login', (req, res) => {
           content: '';
           flex: 1;
           border-bottom: 1px solid #e5e7eb;
+          transition: border-bottom-color 0.3s ease;
         }
         .divider:not(:empty)::before {
           margin-right: .5em;
@@ -132,6 +158,7 @@ router.get('/login', (req, res) => {
           color: #b91c1c;
           font-size: 0.875rem;
           margin-bottom: 1.25rem;
+          transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
         }
         .success {
           padding: 0.75rem 1rem;
@@ -142,62 +169,121 @@ router.get('/login', (req, res) => {
           font-size: 0.875rem;
           margin-bottom: 1.25rem;
           text-align: center;
+          transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
         }
-        @media (prefers-color-scheme: dark) {
-          body {
-            background-color: #09090b;
-            color: #fafafa;
-          }
-          .container {
-            background: #18181b;
-            border-color: rgba(255,255,255,0.1);
-          }
-          .logo {
-            color: #3b82f6;
-          }
-          .subtitle {
-            color: #a1a1aa;
-          }
-          .label {
-            color: #e4e4e7;
-          }
-          .input {
-            background-color: #18181b;
-            border-color: #3f3f46;
-            color: #fafafa;
-          }
-          .input:focus {
-            border-color: #3b82f6;
-          }
-          .checkbox-label {
-            color: #a1a1aa;
-          }
-          .btn-google {
-            background-color: #18181b;
-            border-color: #3f3f46;
-            color: #e4e4e7;
-          }
-          .btn-google:hover {
-            background-color: #27272a;
-          }
-          .divider::before, .divider::after {
-            border-bottom-color: #3f3f46;
-          }
-          .error {
-            background-color: rgba(220,38,38,0.1);
-            border-color: rgba(220,38,38,0.2);
-            color: #fca5a5;
-          }
-          .success {
-            background-color: rgba(22,163,74,0.1);
-            border-color: rgba(22,163,74,0.2);
-            color: #86efac;
-          }
+
+        /* Theme Toggle Button Style */
+        .theme-toggle-btn {
+          position: absolute;
+          top: 1rem;
+          right: 1rem;
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: #64748b;
+          padding: 0.5rem;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: background-color 0.2s, color 0.2s, transform 0.2s;
         }
+        .theme-toggle-btn:hover {
+          background-color: #f1f5f9;
+          color: #0f172a;
+          transform: scale(1.05);
+        }
+        .theme-toggle-btn svg {
+          transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .sun-icon { display: block; }
+        .moon-icon { display: none; }
+
+        /* Dark Mode Class overrides */
+        .dark body {
+          background-color: #09090b;
+          color: #fafafa;
+        }
+        .dark .container {
+          background: #18181b;
+          border-color: rgba(99, 102, 241, 0.2);
+          box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), 0 2px 10px -2px rgba(255, 255, 255, 0.01);
+        }
+        .dark .container:hover {
+          box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6), 0 8px 16px -6px rgba(99, 102, 241, 0.08);
+          border-color: rgba(99, 102, 241, 0.3);
+        }
+        .dark .logo {
+          color: #3b82f6;
+        }
+        .dark .subtitle {
+          color: #a1a1aa;
+        }
+        .dark .label {
+          color: #e4e4e7;
+        }
+        .dark .input {
+          background-color: #18181b;
+          border-color: #3f3f46;
+          color: #fafafa;
+        }
+        .dark .input:focus {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+        .dark .checkbox-label {
+          color: #a1a1aa;
+        }
+        .dark .btn-google {
+          background-color: #18181b;
+          border-color: #3f3f46;
+          color: #e4e4e7;
+        }
+        .dark .btn-google:hover {
+          background-color: #27272a;
+        }
+        .dark .divider::before, .dark .divider::after {
+          border-bottom-color: #3f3f46;
+        }
+        .dark .error {
+          background-color: rgba(220,38,38,0.1);
+          border-color: rgba(220,38,38,0.2);
+          color: #fca5a5;
+        }
+        .dark .success {
+          background-color: rgba(22,163,74,0.1);
+          border-color: rgba(22,163,74,0.2);
+          color: #86efac;
+        }
+        .dark .theme-toggle-btn {
+          color: #a1a1aa;
+        }
+        .dark .theme-toggle-btn:hover {
+          background-color: #27272a;
+          color: #fafafa;
+        }
+        .dark .sun-icon { display: none; }
+        .dark .moon-icon { display: block; }
       </style>
     </head>
     <body>
       <div class="container">
+        <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle theme">
+          <svg class="sun-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="moon-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+        </button>
         <div class="header">
           <div class="logo">🔐 DAuth Platform</div>
           <div class="subtitle">Sign in to your OIDC developer identity</div>
@@ -240,6 +326,12 @@ router.get('/login', (req, res) => {
           <a href="/register" style="color: #2563eb; text-decoration: none; font-weight: 500; margin-left: 0.25rem;">Create one</a>
         </div>
       </div>
+      <script>
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+          const isDark = document.documentElement.classList.toggle('dark');
+          localStorage.setItem('dauth-theme', isDark ? 'dark' : 'light');
+        });
+      </script>
     </body>
     </html>
   `);
