@@ -22,4 +22,7 @@ router.get('/userinfo', validateBearerToken, OidcController.userinfo);
 // POST /userinfo
 router.post('/userinfo', validateBearerToken, OidcController.userinfo);
 
+// GET /logout (OIDC end_session_endpoint)
+router.get('/logout', OidcController.logout);
+
 export default router;

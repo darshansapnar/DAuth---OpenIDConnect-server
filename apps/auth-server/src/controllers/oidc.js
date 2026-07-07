@@ -55,14 +55,20 @@ export class OidcController {
       if (!req.session || !req.session.user) {
         // Cache parameters to session before redirecting to login view
         req.session.authRequest = req.query;
-        return res.redirect('/login');
+        return req.session.save((err) => {
+          if (err) return next(err);
+          return res.redirect('/login');
+        });
       }
 
       // 2.5. Check if user consent has been approved for this request sequence
       if (!req.session.consentApproved) {
         // Cache parameters to session before redirecting to consent view
         req.session.authRequest = req.query;
-        return res.redirect('/consent');
+        return req.session.save((err) => {
+          if (err) return next(err);
+          return res.redirect('/consent');
+        });
       }
 
       // Clear the temporary consent flag so future flows require explicit approval
@@ -212,5 +218,20 @@ export class OidcController {
     } catch (err) {
       next(err);
     }
+  }
+
+  /**
+   * Handles GET /logout (OIDC end_session_endpoint).
+   */
+  static async logout(req, res, next) {
+    const postLogoutRedirectUri = req.query.post_logout_redirect_uri || '/';
+    if (!req.session) {
+      return res.redirect(postLogoutRedirectUri);
+    }
+    req.session.destroy((err) => {
+      if (err) return next(err);
+      res.clearCookie('dauth_sid');
+      return res.redirect(postLogoutRedirectUri);
+    });
   }
 }

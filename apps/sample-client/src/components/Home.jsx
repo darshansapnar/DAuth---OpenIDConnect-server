@@ -85,38 +85,88 @@ export default function Home() {
   const handleLogout = () => {
     localStorage.removeItem('dauth_session');
     setSession(null);
+    window.location.href = 'http://localhost:3001/logout?post_logout_redirect_uri=http://localhost:5174/';
   };
 
   const idTokenClaims = session?.tokens?.id_token ? decodeJwt(session.tokens.id_token) : null;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 flex flex-col font-sans text-gray-900 dark:text-zinc-50 transition-colors duration-200">
-      <header className="bg-white dark:bg-zinc-900 border-b border-gray-200 dark:border-white/5 h-16 flex items-center">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex items-center justify-between">
-          <span className="font-bold text-gray-900 dark:text-zinc-50 tracking-tight">
-            🧪 Sample OIDC Client Application
-          </span>
-          {session && (
-            <Button variant="secondary" size="sm" onClick={handleLogout}>
-              Logout
-            </Button>
-          )}
+    <div className="min-h-screen bg-[#05050A] flex flex-col font-sans text-zinc-50 relative overflow-hidden">
+      {/* Background Grid Pattern */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none"></div>
+      
+      {/* Background Radial Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-indigo-600/10 blur-[120px] rounded-full pointer-events-none -z-10"></div>
+
+      <header className="relative z-10 border-b border-white/5 h-16 flex items-center bg-[#05050A]/60 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-6 w-full flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-xl">🧪</span>
+            <span className="font-bold text-zinc-100 tracking-tight text-sm">
+              Sample OIDC Client Application
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            {session && (
+              <Button variant="secondary" size="sm" onClick={handleLogout} className="!bg-zinc-800 !text-white !border-white/10 hover:!bg-zinc-700">
+                Logout
+              </Button>
+            )}
+          </div>
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 w-full">
+      <main className="flex-1 flex flex-col justify-center max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 w-full relative z-10">
         {!session ? (
-          <div className="max-w-md mx-auto bg-white dark:bg-zinc-900 border border-gray-200 dark:border-white/10 rounded-xl p-8 shadow-sm text-center">
-            <span className="text-4xl block mb-4">🔐</span>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-zinc-50 mb-2">
-              DAuth Integration Sandbox
-            </h1>
-            <p className="text-gray-500 dark:text-zinc-400 text-sm mb-6 leading-relaxed">
-              Verify OAuth 2.0 Authorization Code flow and token claims mapping using DAuth.
-            </p>
-            <Button variant="primary" size="lg" className="w-full" onClick={handleLogin}>
-              Login with DAuth
-            </Button>
+          <div className="relative w-full max-w-lg mx-auto group animate-fadeIn">
+            {/* Soft background glow behind the card */}
+            <div className="absolute -inset-[1px] bg-gradient-to-b from-indigo-500/30 to-purple-500/10 rounded-2xl blur-md opacity-70 group-hover:opacity-100 transition duration-700 -z-10"></div>
+            
+            <div className="bg-[#0b0c10] border border-white/10 rounded-2xl p-10 shadow-[0_0_40px_-10px_rgba(99,102,241,0.15)] text-center relative overflow-hidden backdrop-blur-sm">
+              
+              {/* Radial subtle gradient inside the card */}
+              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-transparent to-transparent pointer-events-none"></div>
+
+              {/* Icon Container */}
+              <div className="relative w-16 h-16 mx-auto mb-6 flex items-center justify-center rounded-full bg-zinc-900/80 border border-white/10 shadow-inner">
+                {/* Glow behind icon */}
+                <div className="absolute inset-0 bg-indigo-500/20 rounded-full blur-md"></div>
+                <span className="text-3xl relative z-10">🔐</span>
+              </div>
+
+              {/* Headings */}
+              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4 tracking-tight relative z-10">
+                Sample OpenID Connect Client
+              </h1>
+              
+              {/* Divider Line */}
+              <div className="h-[2px] w-12 bg-indigo-500/50 mx-auto rounded-full mb-6 relative z-10"></div>
+
+              <p className="text-zinc-400 text-sm sm:text-base mb-10 leading-relaxed max-w-xs mx-auto relative z-10">
+                Authenticate securely using DAuth with OAuth 2.0 Authorization Code Flow and PKCE.
+              </p>
+
+              {/* Action Button */}
+              <div className="relative z-10">
+                <Button variant="primary" size="lg" className="w-full !bg-indigo-600 hover:!bg-indigo-500 transition-all duration-300 shadow-[0_0_20px_-5px_rgba(79,70,229,0.4)] border border-indigo-400/20 text-white font-medium tracking-wide flex items-center justify-center gap-2 py-6 rounded-xl hover:shadow-[0_0_25px_-5px_rgba(79,70,229,0.6)]" onClick={handleLogin}>
+                  <svg className="w-5 h-5 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  Login with DAuth
+                  <svg className="w-5 h-5 text-indigo-300 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </Button>
+              </div>
+
+              {/* Trust Message */}
+              <div className="mt-8 flex items-center justify-center gap-2 text-xs text-zinc-500 font-medium relative z-10">
+                <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Your identity is secure. We never share your information.
+              </div>
+            </div>
           </div>
         ) : (
           <div className="space-y-8 animate-fadeIn">
