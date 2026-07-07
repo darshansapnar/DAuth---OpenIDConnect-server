@@ -151,7 +151,7 @@ function ConsoleLayout() {
       </motion.aside>
 
       {/* Main Content Layout Wrapper */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* Top Navigation Bar */}
         <header className="h-16 bg-white dark:bg-[#111827] border-b border-gray-200 dark:border-white/5 flex items-center justify-between px-6 z-20 relative shadow-xs">
           {/* Breadcrumb Info / Mobile Brand */}
@@ -173,7 +173,7 @@ function ConsoleLayout() {
         </header>
 
         {/* Content Canvas (with animated slide transitions using Framer Motion) */}
-        <main className="flex-1 overflow-y-auto p-6 md:p-8 bg-slate-50 dark:bg-zinc-950">
+        <main className="flex-1 min-h-0 overflow-y-auto p-6 md:p-8 bg-slate-50 dark:bg-zinc-950">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentPath}

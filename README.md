@@ -133,6 +133,20 @@ Once registered, the newly created account credentials can be used immediately t
 * Authorize client applications (like the **Sample Client** running at `http://localhost:5174`).
 * Sign in and view the user database directory inside the **Dashboard Console** (`http://localhost:5173`).
 
+### Google Identity Federation
+DAuth supports Sign In with Google out of the box:
+1. Register a web application client on the **Google Cloud Console**.
+2. Configure the **Authorized redirect URIs** to point to:
+   `http://localhost:3001/api/auth/federation/google/callback`
+3. Obtain your **Client ID** and **Client Secret**.
+4. Configure these values in your local `.env` file:
+   ```env
+   GOOGLE_CLIENT_ID="your-google-client-id"
+   GOOGLE_CLIENT_SECRET="your-google-client-secret"
+   GOOGLE_REDIRECT_URI="http://localhost:3001/api/auth/federation/google/callback"
+   ```
+5. Restart your dev servers (`npm run dev`). A new **"Continue with Google"** option will be available on the Sign In page!
+
 ---
 
 ## Running the Project

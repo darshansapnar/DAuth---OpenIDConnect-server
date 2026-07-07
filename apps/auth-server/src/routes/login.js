@@ -82,6 +82,48 @@ router.get('/login', (req, res) => {
           transition: background-color 0.15s ease;
         }
         .btn:hover { background-color: #1d4ed8; }
+        .btn-google {
+          width: 100%;
+          padding: 0.625rem;
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #1f2937;
+          background-color: #ffffff;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.5rem;
+          text-decoration: none;
+          margin-top: 1rem;
+          transition: background-color 0.15s ease;
+        }
+        .btn-google:hover {
+          background-color: #f9fafb;
+        }
+        .divider {
+          display: flex;
+          align-items: center;
+          text-align: center;
+          margin: 1.5rem 0;
+          color: #9ca3af;
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+        .divider::before, .divider::after {
+          content: '';
+          flex: 1;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        .divider:not(:empty)::before {
+          margin-right: .5em;
+        }
+        .divider:not(:empty)::after {
+          margin-left: .5em;
+        }
         .error {
           padding: 0.75rem 1rem;
           background-color: #fef2f2;
@@ -130,6 +172,17 @@ router.get('/login', (req, res) => {
           .checkbox-label {
             color: #a1a1aa;
           }
+          .btn-google {
+            background-color: #18181b;
+            border-color: #3f3f46;
+            color: #e4e4e7;
+          }
+          .btn-google:hover {
+            background-color: #27272a;
+          }
+          .divider::before, .divider::after {
+            border-bottom-color: #3f3f46;
+          }
           .error {
             background-color: rgba(220,38,38,0.1);
             border-color: rgba(220,38,38,0.2);
@@ -169,6 +222,18 @@ router.get('/login', (req, res) => {
           </div>
           <button class="btn" type="submit">Sign In</button>
         </form>
+
+        <div class="divider">or</div>
+
+        <a href="/auth/google" class="btn-google">
+          <svg width="18" height="18" viewBox="0 0 18 18" style="display: block; flex-shrink: 0;">
+            <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+            <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.938 5.48 18 9 18z" fill="#34A853"/>
+            <path d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+            <path d="M9 3.58c1.32 0 2.505.453 3.44 1.346l2.582-2.58C13.463.896 11.426 0 9 0 5.48 0 2.438 2.062.957 5.039l3.007 2.332C4.672 5.164 6.656 3.58 9 3.58z" fill="#EA4335"/>
+          </svg>
+          Continue with Google
+        </a>
 
         <div style="text-align: center; margin-top: 1.25rem; font-size: 0.875rem;">
           <span style="color: #64748b;">Don't have an account?</span>

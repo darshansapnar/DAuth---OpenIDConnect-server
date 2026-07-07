@@ -24,4 +24,7 @@ export const env = {
   SESSION_SECRET: process.env.SESSION_SECRET,
   DASHBOARD_URL: process.env.DASHBOARD_URL || 'http://localhost:5173',
   SAMPLE_CLIENT_URL: process.env.SAMPLE_CLIENT_URL || 'http://localhost:5174',
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+  GOOGLE_REDIRECT_URI: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:3001/api/auth/federation/google/callback',
 };

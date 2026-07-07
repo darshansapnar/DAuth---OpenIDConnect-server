@@ -11,6 +11,7 @@ import oidcRouter from './routes/oidc.js';
 import loginRouter from './routes/login.js';
 import consentRouter from './routes/consent.js';
 import registerRouter from './routes/register.js';
+import federationRouter from './routes/federation.js';
 
 import { requestLogger } from './middleware/logger.js';
 import { csrfProtection } from './middleware/csrf.js';
@@ -111,6 +112,7 @@ app.use(oidcRouter);
 app.use(loginRouter);
 app.use(consentRouter);
 app.use(registerRouter);
+app.use(federationRouter);
 
 // 9. Mount main API routes
 app.use('/api', router);
