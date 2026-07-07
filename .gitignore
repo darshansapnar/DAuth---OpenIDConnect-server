@@ -37,3 +37,10 @@ lerna-debug.log*
 
 # Auth Server signing keys
 /apps/auth-server/keys/private.pem
+
+# AI Agent instructions / workspace context files
+gemini.md
+dauth_project_context.md
+.agents/
+.gemini/
+
