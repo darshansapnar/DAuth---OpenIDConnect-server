@@ -4,6 +4,8 @@ import session from 'express-session';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import { env } from '#config/env.js';
 import { PrismaSessionStore } from '@quixo3/prisma-session-store';
@@ -19,6 +21,9 @@ import { requestLogger } from './middleware/logger.js';
 import { csrfProtection } from './middleware/csrf.js';
 
 const app = express();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Ignore browser favicon requests to keep logs clean
 app.get('/favicon.ico', (req, res) => res.status(204).end());
@@ -127,6 +132,19 @@ app.use(federationRouter);
 
 // 9. Mount main API routes
 app.use('/api', router);
+
+// Serve Dashboard static files in production
+if (env.NODE_ENV === 'production') {
+  const dashboardDistPath = path.join(__dirname, '../../dashboard/dist');
+
+  // Serve static assets
+  app.use('/dashboard', express.static(dashboardDistPath));
+
+  // Client-side React routing fallback for subpages
+  app.get('/dashboard/*', (req, res) => {
+    res.sendFile(path.join(dashboardDistPath, 'index.html'));
+  });
+}
 
 // Catch-all 404 handler
 app.use((_req, res) => {

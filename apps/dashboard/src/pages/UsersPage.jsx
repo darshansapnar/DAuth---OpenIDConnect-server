@@ -15,7 +15,7 @@ import {
   TableCell,
 } from '@dauth/ui';
 
-const AUTH_SERVER = import.meta.env.VITE_AUTH_SERVER_URL || 'http://localhost:3001';
+const AUTH_SERVER = import.meta.env.VITE_AUTH_SERVER_URL || '';
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('');

@@ -18,12 +18,13 @@ export function csrfProtection(req, res, next) {
   }
   req.csrfToken = csrfToken;
 
-  // 2. Exclude OIDC API endpoints (like /token, /userinfo) which are API-only and use Bearer/Client Secrets
+  // 2. Exclude OIDC API endpoints (like /token, /userinfo) which are API-only and use Bearer/Client Secrets, plus logout
   const isOidcApi =
     req.path === '/token' ||
     req.path === '/userinfo' ||
     req.path === '/api/auth/register' ||
-    req.path === '/api/auth/login';
+    req.path === '/api/auth/login' ||
+    req.path === '/api/auth/logout';
   if (isOidcApi) {
     return next();
   }

@@ -77,7 +77,7 @@ export default function LandingPage() {
           </div>
           <pre className="overflow-x-auto leading-relaxed text-blue-600 dark:text-blue-400">
             {`{
-  "issuer": "${import.meta.env.VITE_AUTH_SERVER_URL || 'http://localhost:3001'}",
+  "issuer": "${import.meta.env.VITE_AUTH_SERVER_URL || ''}",
   "authorization_endpoint": "/api/oauth/authorize",
   "token_endpoint": "/api/oauth/token",
   "userinfo_endpoint": "/api/oauth/userinfo",
@@ -509,7 +509,7 @@ export default function LandingPage() {
             <pre className="overflow-x-auto leading-relaxed">
               {`// Fetch authorization token details using standard fetch in JS
 async function exchangeCodeForTokens(code, verifier) {
-  const response = await fetch('${import.meta.env.VITE_AUTH_SERVER_URL || 'http://localhost:3001'}/api/oauth/token', {
+  const response = await fetch('${import.meta.env.VITE_AUTH_SERVER_URL || ''}/api/oauth/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

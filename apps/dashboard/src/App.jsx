@@ -25,10 +25,14 @@ import SessionsPage from './pages/SessionsPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
 import SystemHealth from './pages/SystemHealth.jsx';
 
+import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
+import RequireAuth from './components/RequireAuth.jsx';
+
 function ConsoleLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const currentPath = location.pathname;
+  const { user, logout } = useAuth();
 
   // 1. Collapsible Sidebar State
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
@@ -119,18 +123,18 @@ function ConsoleLayout() {
           <div className="flex items-center justify-between gap-2.5 px-1.5 py-1">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="h-8 w-8 rounded-full bg-gradient-to-tr from-indigo-500 to-violet-500 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
-                AD
+                {user?.name ? user.name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase() : 'A'}
               </div>
               {!sidebarCollapsed && (
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-gray-800 dark:text-zinc-200 truncate">Admin Developer</p>
-                  <p className="text-[10px] text-gray-500 dark:text-zinc-400 truncate">admin@dauth.io</p>
+                  <p className="text-xs font-semibold text-gray-800 dark:text-zinc-200 truncate">{user?.name || 'Admin'}</p>
+                  <p className="text-[10px] text-gray-500 dark:text-zinc-400 truncate">{user?.email}</p>
                 </div>
               )}
             </div>
             {!sidebarCollapsed && (
               <button
-                onClick={() => navigate('/')}
+                onClick={logout}
                 className="p-1 text-gray-400 hover:text-red-500 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors"
                 title="Log Out"
               >
@@ -201,15 +205,17 @@ function ConsoleLayout() {
 export default function App() {
   return (
     <ThemeProvider>
-      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-        <Routes>
-          {/* Public landing page */}
-          <Route path="/" element={<LandingPage />} />
+      <AuthProvider>
+        <BrowserRouter basename="/dashboard" future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <Routes>
+            {/* Public landing page */}
+            <Route path="/" element={<LandingPage />} />
 
-          {/* Console Layout with Navigation Route binds */}
-          <Route path="/*" element={<ConsoleLayout />} />
-        </Routes>
-      </BrowserRouter>
+            {/* Console Layout with Navigation Route binds */}
+            <Route path="/*" element={<RequireAuth><ConsoleLayout /></RequireAuth>} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
