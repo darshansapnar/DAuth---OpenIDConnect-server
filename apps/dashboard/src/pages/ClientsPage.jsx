@@ -31,6 +31,13 @@ import {
   DropdownItem,
 } from '@dauth/ui';
 
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return '';
+}
+
 export default function ClientsPage() {
   const [clients, setClients] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -113,7 +120,10 @@ export default function ClientsPage() {
 
       const res = await fetch('/api/clients', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': getCookie('dauth_csrf')
+        },
         body: JSON.stringify({ name, redirectUris: splitUris, allowedScopes: splitScopes }),
       });
       const data = await res.json();
@@ -156,7 +166,10 @@ export default function ClientsPage() {
 
       const res = await fetch(`/api/clients/${selectedClient.id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': getCookie('dauth_csrf')
+        },
         body: JSON.stringify({ name, redirectUris: splitUris, allowedScopes: splitScopes }),
       });
       const data = await res.json();
@@ -181,6 +194,7 @@ export default function ClientsPage() {
     try {
       const res = await fetch(`/api/clients/${clientId}/secret`, {
         method: 'POST',
+        headers: { 'X-CSRF-Token': getCookie('dauth_csrf') },
       });
       const data = await res.json();
 
@@ -205,6 +219,7 @@ export default function ClientsPage() {
     try {
       const res = await fetch(`/api/clients/${clientId}`, {
         method: 'DELETE',
+        headers: { 'X-CSRF-Token': getCookie('dauth_csrf') },
       });
 
       if (res.ok) {

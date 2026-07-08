@@ -50,10 +50,11 @@ router.get('/register', (req, res) => {
           background-color: #f8fafc;
           color: #0f172a;
           display: flex;
-          align-items: center;
           justify-content: center;
+          align-items: flex-start;
           min-height: 100vh;
-          overflow: hidden;
+          padding: 5rem 1rem 7rem;
+          overflow-y: auto;
           transition: background-color 0.4s ease, color 0.4s ease;
         }
 

@@ -201,7 +201,7 @@ function ConsoleLayout() {
 export default function App() {
   return (
     <ThemeProvider>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
           {/* Public landing page */}
           <Route path="/" element={<LandingPage />} />

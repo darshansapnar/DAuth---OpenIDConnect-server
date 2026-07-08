@@ -1,5 +1,6 @@
 import * as jose from 'jose';
 import { KeyManagerService } from '#services/keyManager.js';
+import { env } from '#config/env.js';
 
 const KEY_ID = 'dauth_rsa_active_key';
 
@@ -23,7 +24,7 @@ const publicKey = await jose.importSPKI(publicKeyPem, 'RS256');
 export async function signJwt(claims, subject, audience, expiry = '1h') {
   return new jose.SignJWT(claims)
     .setProtectedHeader({ alg: 'RS256', kid: KEY_ID })
-    .setIssuer('http://localhost:3001')
+    .setIssuer(env.ISSUER)
     .setSubject(subject)
     .setAudience(audience)
     .setIssuedAt()
@@ -53,7 +54,7 @@ export async function getActiveJwk() {
  */
 export async function verifyJwt(token) {
   const { payload } = await jose.jwtVerify(token, publicKey, {
-    issuer: 'http://localhost:3001',
+    issuer: env.ISSUER,
   });
   return payload;
 }

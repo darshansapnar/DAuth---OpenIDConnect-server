@@ -1,5 +1,6 @@
 import { OidcService } from '#services/oidc.js';
 import { getActiveJwk } from '#utils/keys.js';
+import { env } from '#config/env.js';
 
 
 /**
@@ -175,11 +176,11 @@ export class OidcController {
    */
   static async discovery(_req, res) {
     const discoveryDoc = {
-      issuer: 'http://localhost:3001',
-      authorization_endpoint: 'http://localhost:3001/authorize',
-      token_endpoint: 'http://localhost:3001/token',
-      userinfo_endpoint: 'http://localhost:3001/userinfo',
-      jwks_uri: 'http://localhost:3001/jwks',
+      issuer: env.ISSUER,
+      authorization_endpoint: `${env.ISSUER}/authorize`,
+      token_endpoint: `${env.ISSUER}/token`,
+      userinfo_endpoint: `${env.ISSUER}/userinfo`,
+      jwks_uri: `${env.ISSUER}/jwks`,
       response_types_supported: ['code'],
       subject_types_supported: ['public'],
       id_token_signing_alg_values_supported: ['RS256'],

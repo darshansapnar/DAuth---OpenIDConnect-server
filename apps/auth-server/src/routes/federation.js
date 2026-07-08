@@ -159,10 +159,16 @@ router.get('/api/auth/federation/google/callback', async (req, res, next) => {
       const authParams = req.session.authRequest;
       delete req.session.authRequest;
       const q = new URLSearchParams(authParams).toString();
-      return res.redirect(`/authorize?${q}`);
+      return req.session.save((err) => {
+        if (err) return next(err);
+        return res.redirect(`/authorize?${q}`);
+      });
     }
 
-    return res.redirect(`${env.DASHBOARD_URL}/dashboard`);
+    return req.session.save((err) => {
+      if (err) return next(err);
+      return res.redirect(`${env.DASHBOARD_URL}/dashboard`);
+    });
   } catch (err) {
     next(err);
   }

@@ -49,10 +49,13 @@ export class AuthController {
 
 
 
-      res.status(200).json({
-        success: true,
-        message: 'Logged in successfully.',
-        user,
+      req.session.save((err) => {
+        if (err) return next(err);
+        res.status(200).json({
+          success: true,
+          message: 'Logged in successfully.',
+          user,
+        });
       });
     } catch (err) {
 

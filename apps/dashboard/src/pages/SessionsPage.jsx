@@ -19,6 +19,13 @@ import {
 
 const AUTH_SERVER = 'http://localhost:3001';
 
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return '';
+}
+
 export default function SessionsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sessions, setSessions] = useState([]);
@@ -50,6 +57,9 @@ export default function SessionsPage() {
     try {
       const res = await fetch(`${AUTH_SERVER}/api/sessions/${id}`, {
         method: 'DELETE',
+        headers: { 
+          'X-CSRF-Token': getCookie('dauth_csrf')
+        },
         credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to revoke session');
