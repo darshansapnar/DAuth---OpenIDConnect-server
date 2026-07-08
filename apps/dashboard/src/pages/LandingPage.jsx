@@ -43,15 +43,15 @@ export default function LandingPage() {
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 flex flex-col md:flex-row items-center gap-12 border-b border-gray-200 dark:border-white/5">
         <div className="flex-1 text-left space-y-6">
           <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-xs font-semibold text-blue-700 dark:text-blue-400">
-            Developer-First Identity Provider
+            OpenID Connect Identity Provider
           </div>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-gray-900 dark:text-zinc-50 leading-tight">
-            Self-hosted authentication, built from the ground up.
+            One identity platform. Every application.
           </h1>
           <p className="text-base md:text-lg text-gray-500 dark:text-zinc-400 max-w-xl leading-relaxed">
-            DAuth is a production-inspired OIDC Identity Provider designed for learning,
-            flexibility, and absolute control. Run it locally, hook it to PostgreSQL, and secure
-            your apps.
+            DAuth centralizes authentication using OAuth 2.0, OpenID Connect, PKCE, RS256 JWT
+            signing, and Google Identity Federation—so every application can share a secure
+            identity platform.
           </p>
           <div className="flex items-center gap-4">
             <Link to="/dashboard">
@@ -77,7 +77,7 @@ export default function LandingPage() {
           </div>
           <pre className="overflow-x-auto leading-relaxed text-blue-600 dark:text-blue-400">
             {`{
-  "issuer": "http://localhost:3001",
+  "issuer": "${import.meta.env.VITE_AUTH_SERVER_URL || 'http://localhost:3001'}",
   "authorization_endpoint": "/api/oauth/authorize",
   "token_endpoint": "/api/oauth/token",
   "userinfo_endpoint": "/api/oauth/userinfo",
@@ -509,7 +509,7 @@ export default function LandingPage() {
             <pre className="overflow-x-auto leading-relaxed">
               {`// Fetch authorization token details using standard fetch in JS
 async function exchangeCodeForTokens(code, verifier) {
-  const response = await fetch('http://localhost:3001/api/oauth/token', {
+  const response = await fetch('${import.meta.env.VITE_AUTH_SERVER_URL || 'http://localhost:3001'}/api/oauth/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -520,9 +520,8 @@ async function exchangeCodeForTokens(code, verifier) {
       client_id: 'dauth_cli_sample_client'
     })
   });
-  
   const tokens = await response.json();
-  console.log('Access Token:', tokens.access_token);
+  // tokens.access_token contains your secure credential
   return tokens;
 }`}
             </pre>

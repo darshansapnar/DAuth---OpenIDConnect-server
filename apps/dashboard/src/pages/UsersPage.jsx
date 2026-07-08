@@ -15,7 +15,7 @@ import {
   TableCell,
 } from '@dauth/ui';
 
-const AUTH_SERVER = 'http://localhost:3001';
+const AUTH_SERVER = import.meta.env.VITE_AUTH_SERVER_URL || 'http://localhost:3001';
 
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -27,11 +27,37 @@ export default function UsersPage() {
     async function fetchUsers() {
       try {
         const res = await fetch(`${AUTH_SERVER}/api/users`, { credentials: 'include' });
-        if (!res.ok) throw new Error('Failed to fetch users');
+
+        if (!res.ok) {
+          switch (res.status) {
+            case 401:
+              setError('Your session has expired. Please sign in again.');
+              setTimeout(() => {
+                window.location.href = `${AUTH_SERVER}/login`;
+              }, 2000);
+              return;
+            case 403:
+              setError('You do not have permission to access the DAuth Console.');
+              return;
+            case 500:
+              setError('An unexpected server error occurred. Please try again later.');
+              return;
+            case 503:
+              setError('DAuth services are temporarily unavailable.');
+              return;
+            default:
+              setError(`Request failed with status ${res.status}. Please try again.`);
+              return;
+          }
+        }
+
         const data = await res.json();
         setUsers(data.users || []);
       } catch (err) {
-        setError(err.message);
+        // Network errors, CORS failures, or server unreachable
+        setError(
+          'Unable to connect to the DAuth server. Please check your connection or try again later.'
+        );
       } finally {
         setLoading(false);
       }
@@ -61,9 +87,6 @@ export default function UsersPage() {
         <div className="text-center">
           <XCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-          <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
-            Make sure the Auth Server is running and you are logged in.
-          </p>
         </div>
       </div>
     );

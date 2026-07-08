@@ -13,8 +13,10 @@ import {
   Badge,
 } from '@dauth/ui';
 
+const AUTH_SERVER = import.meta.env.VITE_AUTH_SERVER_URL || 'http://localhost:3001';
+
 export default function SettingsPage() {
-  const [issuerUrl, setIssuerUrl] = useState('http://localhost:3001');
+  const [issuerUrl, setIssuerUrl] = useState(AUTH_SERVER);
   const [accessTokenExpiry, setAccessTokenExpiry] = useState('3600');
   const [sessionTimeout, setSessionTimeout] = useState('86400');
   const [showAlert, setShowAlert] = useState(false);

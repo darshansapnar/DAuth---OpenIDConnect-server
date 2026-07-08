@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '@dauth/ui';
 
+const AUTH_SERVER_URL = import.meta.env.VITE_AUTH_SERVER_URL || 'http://localhost:3001';
+
 export default function Callback() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -41,7 +43,7 @@ export default function Callback() {
 
       try {
         // 3. Exchange code for Access & ID tokens
-        const tokenResponse = await fetch('http://localhost:3001/token', {
+        const tokenResponse = await fetch(`${AUTH_SERVER_URL}/token`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -64,7 +66,7 @@ export default function Callback() {
         const tokens = await tokenResponse.json();
 
         // 4. Query UserInfo profile using the acquired Access Token
-        const userInfoResponse = await fetch('http://localhost:3001/userinfo', {
+        const userInfoResponse = await fetch(`${AUTH_SERVER_URL}/userinfo`, {
           method: 'GET',
           headers: {
             Authorization: `Bearer ${tokens.access_token}`,

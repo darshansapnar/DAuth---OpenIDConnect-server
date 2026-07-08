@@ -225,7 +225,21 @@ export class OidcController {
    * Handles GET /logout (OIDC end_session_endpoint).
    */
   static async logout(req, res, next) {
-    const postLogoutRedirectUri = req.query.post_logout_redirect_uri || '/';
+    let postLogoutRedirectUri = req.query.post_logout_redirect_uri || '/';
+
+    // Prevent Open Redirect Vulnerability
+    if (postLogoutRedirectUri !== '/') {
+      try {
+        const url = new URL(postLogoutRedirectUri, env.ISSUER);
+        const allowedOrigins = env.ALLOWED_ORIGINS ? env.ALLOWED_ORIGINS.split(',') : [];
+        if (!allowedOrigins.includes(url.origin) && url.origin !== new URL(env.ISSUER).origin) {
+          postLogoutRedirectUri = '/login';
+        }
+      } catch (err) {
+        postLogoutRedirectUri = '/login';
+      }
+    }
+
     if (!req.session) {
       return res.redirect(postLogoutRedirectUri);
     }

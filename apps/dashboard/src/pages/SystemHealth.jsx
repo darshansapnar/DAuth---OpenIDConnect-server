@@ -8,7 +8,7 @@ import {
   CardContent,
 } from '@dauth/ui';
 
-const AUTH_SERVER = 'http://localhost:3001';
+const AUTH_SERVER = import.meta.env.VITE_AUTH_SERVER_URL || 'http://localhost:3001';
 
 export default function SystemHealth() {
   const [health, setHealth] = useState(null);

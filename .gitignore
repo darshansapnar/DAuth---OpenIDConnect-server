@@ -33,7 +33,6 @@ lerna-debug.log*
 # Prisma / DB migrations/local SQLite (if any)
 /apps/auth-server/prisma/*.db
 /apps/auth-server/prisma/*.db-journal
-/apps/auth-server/prisma/migrations/
 
 # Auth Server signing keys
 /apps/auth-server/keys/private.pem

@@ -20,6 +20,9 @@ import { csrfProtection } from './middleware/csrf.js';
 
 const app = express();
 
+// Ignore browser favicon requests to keep logs clean
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 // 1. Structured Logging Middleware (auditing access requests)
 app.use(requestLogger);
 
@@ -66,14 +69,14 @@ app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/login', authLimiter);
 
 // 4. Strict CORS Configuration (removes wildcard CORS with credentials)
-const allowedOrigins = env.ALLOWED_ORIGINS
-  ? env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3001'];
+const allowedOrigins = env.ALLOWED_ORIGINS.split(',');
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      console.log('[DEBUG] CORS Check:', { origin, allowedOrigins });
+      if (env.NODE_ENV !== 'production') {
+        console.log('[DEBUG] CORS Check:', { origin, allowedOrigins });
+      }
       // Allow non-browser agents (Curl, server-to-server OIDC token query), Same-Origin/Redirect 'null' origins, or matching origins
       if (!origin || origin === 'null' || allowedOrigins.includes(origin)) {
         callback(null, true);

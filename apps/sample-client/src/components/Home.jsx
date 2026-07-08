@@ -40,6 +40,8 @@ async function generateCodeChallenge(verifier) {
     .replace(/=+$/, '');
 }
 
+const AUTH_SERVER_URL = import.meta.env.VITE_AUTH_SERVER_URL || 'http://localhost:3001';
+
 export default function Home() {
   const [session, setSession] = useState(null);
 
@@ -69,7 +71,7 @@ export default function Home() {
     const challenge = await generateCodeChallenge(verifier);
 
     // Build OIDC authorization request URL with PKCE params
-    const authUrl = new URL('http://localhost:3001/authorize');
+    const authUrl = new URL(`${AUTH_SERVER_URL}/authorize`);
     authUrl.searchParams.append('client_id', 'dauth_cli_sample_client');
     authUrl.searchParams.append('redirect_uri', 'http://localhost:5174/callback');
     authUrl.searchParams.append('response_type', 'code');
@@ -85,7 +87,7 @@ export default function Home() {
   const handleLogout = () => {
     localStorage.removeItem('dauth_session');
     setSession(null);
-    window.location.href = 'http://localhost:3001/logout?post_logout_redirect_uri=http://localhost:5174/';
+    window.location.href = `${AUTH_SERVER_URL}/logout?post_logout_redirect_uri=http://localhost:5174/`;
   };
 
   const idTokenClaims = session?.tokens?.id_token ? decodeJwt(session.tokens.id_token) : null;

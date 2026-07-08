@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 // Load .env file from the monorepo root
 dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
 
-const requiredEnv = ['DATABASE_URL', 'SESSION_SECRET'];
+const requiredEnv = ['DATABASE_URL', 'SESSION_SECRET', 'ALLOWED_ORIGINS'];
 
 for (const envVar of requiredEnv) {
   if (!process.env[envVar]) {
