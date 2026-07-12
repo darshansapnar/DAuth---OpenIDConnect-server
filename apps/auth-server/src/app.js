@@ -40,8 +40,11 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"], // Required to support styled backend portals
-        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        imgSrc: ["'self'", "data:", "https://lh3.googleusercontent.com", "https://*.google.com"],
+        connectSrc: ["'self'", "*"], // Allow fetch connections to federated servers and OIDC endpoints
         formAction: ["'self'", "*"], // Allow form redirection to OIDC client callback URIs
       },
     },
