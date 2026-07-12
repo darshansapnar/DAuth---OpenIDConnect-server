@@ -11,6 +11,10 @@ const router = Router();
 router.get('/auth/google', (req, res) => {
   // 1. Verify Google Identity configuration
   if (!env.GOOGLE_CLIENT_ID || !env.GOOGLE_CLIENT_SECRET) {
+    console.warn('[SERVER] Google federation requested but configuration is incomplete:', {
+      GOOGLE_CLIENT_ID_PRESENT: !!env.GOOGLE_CLIENT_ID,
+      GOOGLE_CLIENT_SECRET_PRESENT: !!env.GOOGLE_CLIENT_SECRET
+    });
     return res.status(500).send(`
       <!DOCTYPE html>
       <html>
