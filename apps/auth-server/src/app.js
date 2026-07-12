@@ -5,7 +5,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
-import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 import { env } from '#config/env.js';
@@ -81,7 +80,7 @@ app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/login', authLimiter);
 
 // 4. Strict CORS Configuration (removes wildcard CORS with credentials)
-const allowedOrigins = env.ALLOWED_ORIGINS.split(',');
+const allowedOrigins = env.ALLOWED_ORIGINS.split(',').map((o) => o.trim());
 
 app.use(
   cors({
@@ -140,43 +139,7 @@ app.use(federationRouter);
 // 9. Mount main API routes
 app.use('/api', router);
 
-// Temporary diagnostics endpoint for static file resolution
-app.get('/api/debug-static', (req, res) => {
-  const dir = path.join(__dirname, '../../dashboard/dist');
-  try {
-    const exists = fs.existsSync(dir);
-    const contents = exists ? fs.readdirSync(dir) : [];
-    const assetsExists = fs.existsSync(path.join(dir, 'assets'));
-    const assets = assetsExists ? fs.readdirSync(path.join(dir, 'assets')) : [];
-    res.json({
-      success: true,
-      cwd: process.cwd(),
-      __dirname,
-      resolvedPath: dir,
-      dirExists: exists,
-      contents,
-      assetsExists,
-      assets,
-      allowedOrigins: env.ALLOWED_ORIGINS.split(','),
-    });
-  } catch (err) {
-    res.json({
-      success: false,
-      error: err.message,
-      stack: err.stack,
-    });
-  }
-});
 
-// In-memory diagnostics error log
-global.recentErrors = global.recentErrors || [];
-
-app.get('/api/debug-errors', (req, res) => {
-  res.json({
-    success: true,
-    errors: global.recentErrors,
-  });
-});
 
 // Serve Dashboard static files in production
 if (env.NODE_ENV === 'production') {
@@ -206,31 +169,18 @@ app.use((_req, res) => {
 
 
 
-// Global error handling middleware (Exposes internal stack traces for diagnostics)
+// Global error handling middleware (Never leaks internal stack traces)
 app.use((err, _req, res, _next) => {
   console.error('[ERROR] Unhandled Exception:', err);
 
-  const errorDetail = {
-    timestamp: new Date().toISOString(),
-    name: err.name,
-    message: err.message,
-    stack: err.stack,
-    url: _req.url,
-    method: _req.method,
-    headers: _req.headers,
-  };
-  global.recentErrors.unshift(errorDetail);
-  if (global.recentErrors.length > 20) {
-    global.recentErrors.pop();
-  }
-
   const status = err.status || 500;
-  const message = err.message;
+  const message =
+    env.NODE_ENV === 'production' ? 'An unexpected internal error occurred.' : err.message;
 
   res.status(status).json({
     error: err.name || 'InternalServerError',
     message,
-    stack: err.stack,
+    ...(env.NODE_ENV !== 'production' && { stack: err.stack }),
   });
 });
 
