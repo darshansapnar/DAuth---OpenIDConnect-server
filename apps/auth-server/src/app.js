@@ -193,9 +193,33 @@ app.use((_req, res) => {
   });
 });
 
+// In-memory diagnostics error log
+global.recentErrors = global.recentErrors || [];
+
+app.get('/api/debug-errors', (req, res) => {
+  res.json({
+    success: true,
+    errors: global.recentErrors,
+  });
+});
+
 // Global error handling middleware (Exposes internal stack traces for diagnostics)
 app.use((err, _req, res, _next) => {
   console.error('[ERROR] Unhandled Exception:', err);
+
+  const errorDetail = {
+    timestamp: new Date().toISOString(),
+    name: err.name,
+    message: err.message,
+    stack: err.stack,
+    url: _req.url,
+    method: _req.method,
+    headers: _req.headers,
+  };
+  global.recentErrors.unshift(errorDetail);
+  if (global.recentErrors.length > 20) {
+    global.recentErrors.pop();
+  }
 
   const status = err.status || 500;
   const message = err.message;
