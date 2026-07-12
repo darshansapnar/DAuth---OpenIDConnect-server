@@ -167,6 +167,16 @@ app.get('/api/debug-static', (req, res) => {
   }
 });
 
+// In-memory diagnostics error log
+global.recentErrors = global.recentErrors || [];
+
+app.get('/api/debug-errors', (req, res) => {
+  res.json({
+    success: true,
+    errors: global.recentErrors,
+  });
+});
+
 // Serve Dashboard static files in production
 if (env.NODE_ENV === 'production') {
   const dashboardDistPath = path.join(__dirname, '../../dashboard/dist');
@@ -193,15 +203,7 @@ app.use((_req, res) => {
   });
 });
 
-// In-memory diagnostics error log
-global.recentErrors = global.recentErrors || [];
 
-app.get('/api/debug-errors', (req, res) => {
-  res.json({
-    success: true,
-    errors: global.recentErrors,
-  });
-});
 
 // Global error handling middleware (Exposes internal stack traces for diagnostics)
 app.use((err, _req, res, _next) => {
