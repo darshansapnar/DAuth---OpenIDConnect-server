@@ -140,6 +140,11 @@ if (env.NODE_ENV === 'production') {
   // Serve static assets
   app.use('/dashboard', express.static(dashboardDistPath));
 
+  // Redirect root '/' to '/dashboard' for smoother landing
+  app.get('/', (req, res) => {
+    res.redirect('/dashboard');
+  });
+
   // Client-side React routing fallback for subpages
   app.get('/dashboard/*', (req, res) => {
     res.sendFile(path.join(dashboardDistPath, 'index.html'));
