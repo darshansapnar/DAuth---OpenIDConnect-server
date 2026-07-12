@@ -157,6 +157,7 @@ app.get('/api/debug-static', (req, res) => {
       contents,
       assetsExists,
       assets,
+      allowedOrigins: env.ALLOWED_ORIGINS.split(','),
     });
   } catch (err) {
     res.json({
