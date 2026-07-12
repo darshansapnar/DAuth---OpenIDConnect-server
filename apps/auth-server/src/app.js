@@ -80,7 +80,11 @@ app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/login', authLimiter);
 
 // 4. Strict CORS Configuration (removes wildcard CORS with credentials)
-const allowedOrigins = env.ALLOWED_ORIGINS.split(',').map((o) => o.trim());
+let rawOrigins = env.ALLOWED_ORIGINS || '';
+if (rawOrigins.startsWith('ALLOWED_ORIGINS=')) {
+  rawOrigins = rawOrigins.replace('ALLOWED_ORIGINS=', '');
+}
+const allowedOrigins = rawOrigins.split(',').map((o) => o.trim());
 
 app.use(
   cors({
