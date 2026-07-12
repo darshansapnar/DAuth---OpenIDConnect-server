@@ -73,7 +73,7 @@ export default function Home() {
     // Build OIDC authorization request URL with PKCE params
     const authUrl = new URL(`${AUTH_SERVER_URL}/authorize`);
     authUrl.searchParams.append('client_id', 'dauth_cli_sample_client');
-    authUrl.searchParams.append('redirect_uri', `${window.location.origin}/callback`);
+    authUrl.searchParams.append('redirect_uri', 'http://localhost:5174/callback');
     authUrl.searchParams.append('response_type', 'code');
     authUrl.searchParams.append('scope', 'openid profile email');
     authUrl.searchParams.append('state', state);
@@ -87,7 +87,7 @@ export default function Home() {
   const handleLogout = () => {
     localStorage.removeItem('dauth_session');
     setSession(null);
-    window.location.href = `${AUTH_SERVER_URL}/logout?post_logout_redirect_uri=${window.location.origin}/`;
+    window.location.href = `${AUTH_SERVER_URL}/logout?post_logout_redirect_uri=http://localhost:5174/`;
   };
 
   const idTokenClaims = session?.tokens?.id_token ? decodeJwt(session.tokens.id_token) : null;
@@ -96,7 +96,7 @@ export default function Home() {
     <div className="min-h-screen bg-[#05050A] flex flex-col font-sans text-zinc-50 relative overflow-hidden">
       {/* Background Grid Pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none"></div>
-      
+
       {/* Background Radial Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[500px] bg-indigo-600/10 blur-[120px] rounded-full pointer-events-none -z-10"></div>
 
@@ -123,9 +123,9 @@ export default function Home() {
           <div className="relative w-full max-w-lg mx-auto group animate-fadeIn">
             {/* Soft background glow behind the card */}
             <div className="absolute -inset-[1px] bg-gradient-to-b from-indigo-500/30 to-purple-500/10 rounded-2xl blur-md opacity-70 group-hover:opacity-100 transition duration-700 -z-10"></div>
-            
+
             <div className="bg-[#0b0c10] border border-white/10 rounded-2xl p-10 shadow-[0_0_40px_-10px_rgba(99,102,241,0.15)] text-center relative overflow-hidden backdrop-blur-sm">
-              
+
               {/* Radial subtle gradient inside the card */}
               <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/20 via-transparent to-transparent pointer-events-none"></div>
 
@@ -140,7 +140,7 @@ export default function Home() {
               <h1 className="text-2xl sm:text-3xl font-bold text-white mb-4 tracking-tight relative z-10">
                 Sample OpenID Connect Client
               </h1>
-              
+
               {/* Divider Line */}
               <div className="h-[2px] w-12 bg-indigo-500/50 mx-auto rounded-full mb-6 relative z-10"></div>
 

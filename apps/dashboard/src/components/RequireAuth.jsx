@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext.jsx';
 const AUTH_SERVER = import.meta.env.VITE_AUTH_SERVER_URL || '';
 
 export default function RequireAuth({ children }) {
-  const { user, loading, error, checkAuth } = useAuth();
+  const { user, loading, error, checkAuth, logout } = useAuth();
 
   if (loading) {
     return (
@@ -69,9 +69,7 @@ export default function RequireAuth({ children }) {
           <div className="pt-2">
             <Button
               variant="secondary"
-              onClick={() => {
-                window.location.href = `${AUTH_SERVER}/login`;
-              }}
+              onClick={logout}
               className="w-full"
             >
               Sign in with another account

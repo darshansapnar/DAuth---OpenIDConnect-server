@@ -51,7 +51,7 @@ export default function Callback() {
           body: JSON.stringify({
             grant_type: 'authorization_code',
             code,
-            redirect_uri: `${window.location.origin}/callback`,
+            redirect_uri: 'http://localhost:5174/callback',
             client_id: 'dauth_cli_sample_client',
             client_secret: 'dauth_sec_89dfj19h0fas89d12fjlkjas',
             code_verifier: verifier || '',
