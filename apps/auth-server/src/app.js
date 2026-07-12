@@ -5,6 +5,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 import { env } from '#config/env.js';
@@ -138,6 +139,33 @@ app.use(federationRouter);
 
 // 9. Mount main API routes
 app.use('/api', router);
+
+// Temporary diagnostics endpoint for static file resolution
+app.get('/api/debug-static', (req, res) => {
+  const dir = path.join(__dirname, '../../dashboard/dist');
+  try {
+    const exists = fs.existsSync(dir);
+    const contents = exists ? fs.readdirSync(dir) : [];
+    const assetsExists = fs.existsSync(path.join(dir, 'assets'));
+    const assets = assetsExists ? fs.readdirSync(path.join(dir, 'assets')) : [];
+    res.json({
+      success: true,
+      cwd: process.cwd(),
+      __dirname,
+      resolvedPath: dir,
+      dirExists: exists,
+      contents,
+      assetsExists,
+      assets,
+    });
+  } catch (err) {
+    res.json({
+      success: false,
+      error: err.message,
+      stack: err.stack,
+    });
+  }
+});
 
 // Serve Dashboard static files in production
 if (env.NODE_ENV === 'production') {
