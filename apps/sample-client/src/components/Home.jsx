@@ -73,7 +73,7 @@ export default function Home() {
     // Build OIDC authorization request URL with PKCE params
     const authUrl = new URL(`${AUTH_SERVER_URL}/authorize`);
     authUrl.searchParams.append('client_id', 'dauth_cli_sample_client');
-    authUrl.searchParams.append('redirect_uri', 'http://localhost:5174/callback');
+    authUrl.searchParams.append('redirect_uri', `${window.location.origin}/callback`);
     authUrl.searchParams.append('response_type', 'code');
     authUrl.searchParams.append('scope', 'openid profile email');
     authUrl.searchParams.append('state', state);
@@ -87,7 +87,7 @@ export default function Home() {
   const handleLogout = () => {
     localStorage.removeItem('dauth_session');
     setSession(null);
-    window.location.href = `${AUTH_SERVER_URL}/logout?post_logout_redirect_uri=http://localhost:5174/`;
+    window.location.href = `${AUTH_SERVER_URL}/logout?post_logout_redirect_uri=${window.location.origin}/`;
   };
 
   const idTokenClaims = session?.tokens?.id_token ? decodeJwt(session.tokens.id_token) : null;
