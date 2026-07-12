@@ -22,6 +22,9 @@ import { csrfProtection } from './middleware/csrf.js';
 
 const app = express();
 
+// Enable trusting reverse proxies (Render, AWS ALB, etc.) to allow secure session cookies
+app.set('trust proxy', 1);
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
