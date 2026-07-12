@@ -193,18 +193,17 @@ app.use((_req, res) => {
   });
 });
 
-// Global error handling middleware (Never leaks internal stack traces)
+// Global error handling middleware (Exposes internal stack traces for diagnostics)
 app.use((err, _req, res, _next) => {
   console.error('[ERROR] Unhandled Exception:', err);
 
   const status = err.status || 500;
-  const message =
-    env.NODE_ENV === 'production' ? 'An unexpected internal error occurred.' : err.message;
+  const message = err.message;
 
   res.status(status).json({
     error: err.name || 'InternalServerError',
     message,
-    ...(env.NODE_ENV !== 'production' && { stack: err.stack }),
+    stack: err.stack,
   });
 });
 
