@@ -207,6 +207,15 @@ router.get('/login', (req, res) => {
           transition: color 0.4s ease;
         }
 
+        .brand-info {
+          font-size: 0.75rem;
+          color: #f43f5e;
+          margin-top: 0.5rem;
+          font-weight: 500;
+          letter-spacing: 0.01em;
+          transition: color 0.4s ease;
+        }
+
         /* ─── Alerts ─── */
         .alert {
           padding: 0.75rem 1rem;
@@ -463,6 +472,7 @@ router.get('/login', (req, res) => {
 
         .dark .brand-name { color: #e0e7ff; }
         .dark .brand-subtitle { color: #71717a; }
+        .dark .brand-info { color: #f43f5e; }
 
         .dark .label { color: #d4d4d8; }
         .dark .input {
@@ -567,8 +577,9 @@ router.get('/login', (req, res) => {
                 <circle cx="12" cy="16" r="1"></circle>
               </svg>
             </div>
-            <div class="brand-name">DAuth</div>
-            <div class="brand-subtitle">OpenID Connect Identity Provider</div>
+            <div class="brand-name">DAuth Admin Console</div>
+            <div class="brand-subtitle">Administrator Sign In</div>
+            <div class="brand-info">Authorized administrators only.</div>
           </div>
 
           <!-- Alerts -->
@@ -620,10 +631,6 @@ router.get('/login', (req, res) => {
             </button>
           </form>
 
-          <div class="footer-text">
-            <span>Don't have an account?</span>
-            <a href="/register">Create one</a>
-          </div>
         </div>
       </div>
 
