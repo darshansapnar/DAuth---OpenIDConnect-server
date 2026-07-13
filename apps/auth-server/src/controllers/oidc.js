@@ -54,11 +54,11 @@ export class OidcController {
 
       // 2. Validate active administrator/user SSO session
       if (!req.session || !req.session.user) {
-        // Cache parameters to session before redirecting to login view
+        // Cache parameters to session before redirecting to OIDC login view
         req.session.authRequest = req.query;
         return req.session.save((err) => {
           if (err) return next(err);
-          return res.redirect('/login');
+          return res.redirect('/oauth/login');
         });
       }
 

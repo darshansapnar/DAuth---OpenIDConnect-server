@@ -4,8 +4,8 @@ import { env } from '#config/env.js';
 
 const router = Router();
 
-// GET /login - Renders the provider-hosted login view
-router.get('/login', (req, res) => {
+// GET /oauth/login - Renders the client-hosted OIDC login view
+router.get('/oauth/login', (req, res) => {
   // Clear the active user session if Switch Account is requested
   if (req.query.error && req.query.error.startsWith('Switch')) {
     if (req.session) {
@@ -13,7 +13,7 @@ router.get('/login', (req, res) => {
     }
   }
 
-  // If already authenticated, redirect back to authorization or dashboard console
+  // If already authenticated, redirect back to OIDC authorization
   if (req.session && req.session.user) {
     if (req.session.authRequest) {
       const q = new URLSearchParams(req.session.authRequest).toString();
@@ -25,6 +25,9 @@ router.get('/login', (req, res) => {
   const errorMessage = req.query.error ? decodeURIComponent(req.query.error) : '';
   const successMessage = req.query.success ? decodeURIComponent(req.query.success) : '';
 
+  // Google Identity Federation configuration status check
+  const googleEnabled = !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
+
   res.send(`
     <!DOCTYPE html>
     <html lang="en">
@@ -32,7 +35,7 @@ router.get('/login', (req, res) => {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Sign In - DAuth</title>
-      <meta name="description" content="Sign in to DAuth — OpenID Connect Identity Provider">
+      <meta name="description" content="Sign in to authenticate with DAuth Client Applications">
       <link rel="preconnect" href="https://fonts.googleapis.com">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -199,304 +202,281 @@ router.get('/login', (req, res) => {
         }
 
         .brand-subtitle {
-          font-size: 0.8125rem;
+          font-size: 0.875rem;
           color: #64748b;
-          margin-top: 0.375rem;
+          margin-top: 0.25rem;
           font-weight: 400;
-          letter-spacing: 0.01em;
           transition: color 0.4s ease;
         }
 
-        /* ─── Alerts ─── */
-        .alert {
-          padding: 0.75rem 1rem;
-          border-radius: 10px;
-          font-size: 0.8125rem;
-          margin-bottom: 1.25rem;
-          position: relative;
-          z-index: 1;
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          line-height: 1.5;
-          transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-        }
-        .alert-error {
-          background-color: #fef2f2;
-          border: 1px solid #fecaca;
-          color: #b91c1c;
-        }
-        .alert-success {
-          background-color: #f0fdf4;
-          border: 1px solid #bbf7d0;
-          color: #15803d;
-        }
-
-        /* ─── Form ─── */
-        .form-group { margin-bottom: 1.375rem; position: relative; z-index: 1; }
+        /* ─── Forms ─── */
+        .form-group { margin-bottom: 1.25rem; position: relative; z-index: 1; }
 
         .label {
           display: block;
-          font-size: 0.8125rem;
-          font-weight: 600;
-          color: #1e293b;
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #475569;
           margin-bottom: 0.5rem;
-          letter-spacing: 0.01em;
-          transition: color 0.3s ease;
+          transition: color 0.4s ease;
         }
 
-        .input-wrapper {
-          position: relative;
-          display: flex;
-          align-items: center;
+        .input-wrapper { position: relative; }
+
+        .input {
+          width: 100%;
+          height: 44px;
+          padding: 0 1rem 0 2.5rem;
+          background-color: #ffffff;
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          font-size: 0.95rem;
+          color: #0f172a;
+          outline: none;
+          transition: border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.4s ease, color 0.4s ease;
+        }
+        .input:focus {
+          border-color: #2563eb;
+          box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
         }
 
         .input-icon {
           position: absolute;
-          left: 0.875rem;
+          top: 50%;
+          left: 1rem;
+          transform: translateY(-50%);
           color: #94a3b8;
-          pointer-events: none;
           display: flex;
           align-items: center;
-          transition: color 0.3s ease;
+          pointer-events: none;
+          transition: color 0.25s ease;
         }
-
-        .input {
-          width: 100%;
-          padding: 0.75rem 0.875rem 0.75rem 2.75rem;
-          font-size: 0.875rem;
-          font-family: inherit;
-          border: 1px solid #e2e8f0;
-          border-radius: 10px;
-          outline: none;
-          background-color: #f8fafc;
-          color: #0f172a;
-          transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease, color 0.3s ease;
-        }
-        .input::placeholder { color: #94a3b8; }
-        .input:focus {
-          border-color: #2563eb;
-          box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
-          background-color: #ffffff;
+        .input:focus + .input-icon,
+        .input-wrapper:focus-within .input-icon {
+          color: #2563eb;
         }
 
         .password-toggle {
           position: absolute;
-          right: 0.75rem;
+          top: 50%;
+          right: 1rem;
+          transform: translateY(-50%);
           background: none;
           border: none;
           color: #94a3b8;
           cursor: pointer;
-          padding: 0.25rem;
           display: flex;
           align-items: center;
-          transition: color 0.2s ease;
+          padding: 0.25rem;
+          border-radius: 4px;
+          transition: color 0.25s ease;
         }
         .password-toggle:hover { color: #475569; }
 
-        /* ─── Checkbox ─── */
         .checkbox-group {
           display: flex;
           align-items: center;
-          gap: 0.5rem;
-          margin: 1.25rem 0 1.5rem;
+          margin-bottom: 1.5rem;
           position: relative;
           z-index: 1;
         }
+
         .checkbox-input {
           width: 16px;
           height: 16px;
+          border-radius: 4px;
+          border: 1px solid #cbd5e1;
+          cursor: pointer;
           accent-color: #2563eb;
-          cursor: pointer;
-        }
-        .checkbox-label {
-          font-size: 0.8125rem;
-          color: #475569;
-          user-select: none;
-          cursor: pointer;
-          transition: color 0.3s ease;
         }
 
-        /* ─── Primary Button ─── */
-        .btn-primary {
-          position: relative;
-          z-index: 1;
-          width: 100%;
-          padding: 0.8125rem;
+        .checkbox-label {
           font-size: 0.875rem;
-          font-weight: 600;
-          font-family: inherit;
-          color: #ffffff;
-          background: linear-gradient(135deg, #2563eb, #7c3aed);
-          border: none;
-          border-radius: 10px;
+          color: #475569;
+          margin-left: 0.5rem;
           cursor: pointer;
+          user-select: none;
+          transition: color 0.4s ease;
+        }
+
+        /* ─── Buttons ─── */
+        .btn-primary {
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 0.5rem;
-          box-shadow: 0 2px 12px rgba(37,99,235,0.3);
-          transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
-          letter-spacing: 0.01em;
+          width: 100%;
+          height: 46px;
+          background: linear-gradient(135deg, #2563eb, #1d4ed8);
+          border: none;
+          border-radius: 8px;
+          color: #ffffff;
+          font-size: 0.95rem;
+          font-weight: 600;
+          cursor: pointer;
+          box-shadow: 0 4px 12px rgba(37,99,235,0.15);
+          transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+          position: relative;
+          z-index: 1;
         }
         .btn-primary:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 4px 20px rgba(37,99,235,0.4);
-          filter: brightness(1.08);
+          box-shadow: 0 6px 16px rgba(37,99,235,0.25);
         }
-        .btn-primary:active { transform: translateY(0) scale(0.99); }
-        .btn-primary svg { transition: transform 0.2s ease; }
-        .btn-primary:hover svg:last-child { transform: translateX(3px); }
+        .btn-primary:active {
+          transform: scale(0.985);
+        }
 
-        /* ─── Divider ─── */
+        /* ─── Social Login Buttons ─── */
+        .btn-google {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.75rem;
+          width: 100%;
+          height: 48px;
+          border-radius: 8px;
+          font-size: 0.95rem;
+          font-weight: 500;
+          text-decoration: none;
+          margin-bottom: 0.75rem;
+          transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+          background-color: #ffffff;
+          border: 1px solid #e2e8f0;
+          color: #334155;
+        }
+        .btn-google:hover {
+          background-color: #f8fafc;
+          border-color: #cbd5e1;
+        }
+
+        /* ─── Layout Divider ─── */
         .divider {
           display: flex;
           align-items: center;
           text-align: center;
           margin: 1.5rem 0;
-          color: #94a3b8;
-          font-size: 0.6875rem;
+          font-size: 0.75rem;
           text-transform: uppercase;
           letter-spacing: 0.1em;
-          font-weight: 500;
+          color: #94a3b8;
+          font-weight: 600;
           position: relative;
           z-index: 1;
         }
         .divider::before, .divider::after {
           content: '';
           flex: 1;
-          border-bottom: 1px solid #e5e7eb;
-          transition: border-bottom-color 0.3s ease;
+          border-bottom: 1px solid #e2e8f0;
+          transition: border-color 0.4s ease;
         }
-        .divider:not(:empty)::before { margin-right: 0.75em; }
-        .divider:not(:empty)::after { margin-left: 0.75em; }
+        .divider::before { margin-right: .75rem; }
+        .divider::after { margin-left: .75rem; }
 
-        /* ─── Google Button ─── */
-        .btn-google {
+        /* ─── Alerts ─── */
+        .alert {
+          display: flex;
+          align-items: flex-start;
+          gap: 0.75rem;
+          padding: 0.875rem 1rem;
+          border: 1px solid;
+          border-radius: 8px;
+          font-size: 0.875rem;
+          margin-bottom: 1.5rem;
           position: relative;
           z-index: 1;
-          width: 100%;
-          padding: 0.75rem;
-          font-size: 0.875rem;
-          font-weight: 500;
-          font-family: inherit;
-          color: #1f2937;
-          background-color: #ffffff;
-          border: 1px solid #d1d5db;
-          border-radius: 10px;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 0.625rem;
-          text-decoration: none;
-          transition: background-color 0.15s ease, transform 0.1s ease, border-color 0.3s ease, box-shadow 0.2s ease;
+          line-height: 1.4;
+          animation: slideDown 0.3s ease;
         }
-        .btn-google:hover {
-          background-color: #f9fafb;
-          border-color: #9ca3af;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-        }
-        .btn-google:active { transform: scale(0.99); }
 
-        /* ─── Footer Link ─── */
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert svg { flex-shrink: 0; margin-top: 2px; }
+
+        .alert-error {
+          background-color: #fef2f2;
+          border-color: #fecaca;
+          color: #991b1b;
+        }
+        .alert-success {
+          background-color: #f0fdf4;
+          border-color: #bbf7d0;
+          color: #166534;
+        }
+
+        /* ─── Footer ─── */
         .footer-text {
           text-align: center;
+          font-size: 0.875rem;
           margin-top: 1.5rem;
-          font-size: 0.8125rem;
           position: relative;
           z-index: 1;
+          transition: color 0.4s ease;
         }
-        .footer-text span { color: #64748b; transition: color 0.3s ease; }
+        .footer-text span { color: #64748b; }
         .footer-text a {
           color: #2563eb;
           text-decoration: none;
-          font-weight: 500;
+          font-weight: 600;
           margin-left: 0.25rem;
           transition: color 0.2s ease;
         }
         .footer-text a:hover { color: #1d4ed8; text-decoration: underline; }
 
-        /* ═══════════════════════════════════════
-           DARK MODE OVERRIDES
-        ═══════════════════════════════════════ */
+        /* ─── Dark Mode overrides ─── */
         .dark body {
-          background-color: #05050A;
+          background-color: #09090b;
           color: #fafafa;
         }
-
         .dark .bg-grid {
           background-image:
-            linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(255,255,255,0.035) 1px, transparent 1px);
+            linear-gradient(to right, rgba(255,255,255,0.015) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(255,255,255,0.015) 1px, transparent 1px);
+          mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 60%, transparent 100%);
         }
-
         .dark .bg-glow {
-          background: radial-gradient(ellipse, rgba(99,102,241,0.1) 0%, transparent 70%);
+          background: radial-gradient(ellipse, rgba(99,102,241,0.07) 0%, transparent 70%);
         }
-
-        .dark .card-glow {
-          background: linear-gradient(160deg, rgba(99,102,241,0.25), rgba(139,92,246,0.1));
-        }
-
         .dark .card {
-          background: #0c0d12;
-          border-color: rgba(255,255,255,0.08);
-          box-shadow:
-            0 0 0 1px rgba(99,102,241,0.06),
-            0 8px 32px rgba(0,0,0,0.5);
+          background: #0f0f12;
+          border-color: rgba(255,255,255,0.05);
+          box-shadow: 0 10px 40px -10px rgba(0,0,0,0.7);
         }
-
-        .dark .card-inner-glow {
-          background: radial-gradient(ellipse at top center, rgba(99,102,241,0.06) 0%, transparent 65%);
-        }
-
         .dark .theme-toggle-btn {
-          background: rgba(255,255,255,0.04);
-          border-color: rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.03);
+          border-color: rgba(255,255,255,0.05);
           color: #71717a;
         }
         .dark .theme-toggle-btn:hover {
-          background: rgba(255,255,255,0.08);
+          background: rgba(255,255,255,0.06);
           color: #e4e4e7;
         }
-
-        .dark .brand-name { color: #e0e7ff; }
+        .dark .brand-name { color: #ffffff; }
         .dark .brand-subtitle { color: #71717a; }
-
-        .dark .label { color: #d4d4d8; }
+        .dark .label { color: #a1a1aa; }
         .dark .input {
-          background-color: #0c0d12;
-          border-color: rgba(255,255,255,0.1);
-          color: #fafafa;
+          background-color: #060608;
+          border-color: rgba(255,255,255,0.08);
+          color: #f4f4f5;
         }
-        .dark .input::placeholder { color: #52525b; }
         .dark .input:focus {
           border-color: #6366f1;
           box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
-          background-color: #111218;
         }
-        .dark .input-icon { color: #52525b; }
-
-        .dark .password-toggle { color: #52525b; }
-        .dark .password-toggle:hover { color: #a1a1aa; }
-
         .dark .checkbox-label { color: #a1a1aa; }
-
+        .dark .divider::before, .dark .divider::after { border-color: rgba(255,255,255,0.05); }
         .dark .btn-primary {
-          box-shadow: 0 2px 16px rgba(99,102,241,0.25);
+          background: linear-gradient(135deg, #6366f1, #4f46e5);
+          box-shadow: 0 4px 12px rgba(99,102,241,0.15);
         }
         .dark .btn-primary:hover {
-          box-shadow: 0 4px 24px rgba(99,102,241,0.35);
-        }
-
-        .dark .divider { color: #52525b; }
-        .dark .divider::before, .dark .divider::after {
-          border-bottom-color: rgba(255,255,255,0.08);
+          box-shadow: 0 6px 16px rgba(99,102,241,0.25);
         }
 
         .dark .btn-google {
-          background-color: #0c0d12;
+          background-color: #0b0c10;
           border-color: rgba(255,255,255,0.1);
           color: #d4d4d8;
         }
@@ -582,7 +562,7 @@ router.get('/login', (req, res) => {
           </div>` : ''}
 
           <!-- Login Form -->
-          <form action="/login" method="POST">
+          <form action="/oauth/login" method="POST">
             <input type="hidden" name="_csrf" value="${req.csrfToken || ''}">
 
             <div class="form-group">
@@ -620,6 +600,19 @@ router.get('/login', (req, res) => {
             </button>
           </form>
 
+          ${googleEnabled ? `
+            <div class="divider">OR</div>
+            <a href="/auth/google" class="btn-google">
+              <svg width="18" height="18" viewBox="0 0 18 18" style="display:block;flex-shrink:0;">
+                <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+                <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.938 5.48 18 9 18z" fill="#34A853"/>
+                <path d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+                <path d="M9 3.58c1.32 0 2.505.453 3.44 1.346l2.582-2.58C13.463.896 11.426 0 9 0 5.48 0 2.438 2.062.957 5.039l3.007 2.332C4.672 5.164 6.656 3.58 9 3.58z" fill="#EA4335"/>
+              </svg>
+              Continue with Google
+            </a>
+          ` : ''}
+
           <div class="footer-text">
             <span>Don't have an account?</span>
             <a href="/register">Create one</a>
@@ -655,23 +648,23 @@ router.get('/login', (req, res) => {
   `);
 });
 
-// POST /login - Processes administrative credentials and resumes authorization flow
-router.post('/login', async (req, res, next) => {
+// POST /oauth/login - Processes user credentials and redirects back to authorize
+router.post('/oauth/login', async (req, res, next) => {
   try {
     const { email, password, rememberMe } = req.body;
 
     if (!email || !password) {
-      return res.redirect('/login?error=' + encodeURIComponent('Email and password are required.'));
+      return res.redirect('/oauth/login?error=' + encodeURIComponent('Email and password are required.'));
     }
 
     let user;
     try {
       user = await AuthService.login({ email, password });
     } catch {
-      return res.redirect('/login?error=' + encodeURIComponent('Invalid email or password.'));
+      return res.redirect('/oauth/login?error=' + encodeURIComponent('Invalid email or password.'));
     }
 
-    // Attach user profile to session state with administrator status check
+    // Establish session profile with administrator status check
     req.session.user = {
       id: user.id,
       email: user.email,
@@ -688,7 +681,6 @@ router.post('/login', async (req, res, next) => {
     // Resume OIDC authorization flow if cache parameters exist, else send user to dashboard console
     if (req.session.authRequest) {
       const authParams = req.session.authRequest;
-      // Scrub query parameters from user session
       delete req.session.authRequest;
       const q = new URLSearchParams(authParams).toString();
       return req.session.save((err) => {

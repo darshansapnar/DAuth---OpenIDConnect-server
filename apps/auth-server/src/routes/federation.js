@@ -70,20 +70,20 @@ router.get('/api/auth/federation/google/callback', async (req, res, next) => {
 
     // 1. Handle Google-level authorization errors
     if (googleError) {
-      return res.redirect('/login?error=' + encodeURIComponent(`Google authentication failed: ${googleError}`));
+      return res.redirect('/oauth/login?error=' + encodeURIComponent(`Google authentication failed: ${googleError}`));
     }
 
     // 2. Verify state token match to block CSRF replays
     const cachedState = req.session.googleState;
     if (!state || !cachedState || state !== cachedState) {
-      return res.redirect('/login?error=' + encodeURIComponent('Security verification failed: State token mismatch.'));
+      return res.redirect('/oauth/login?error=' + encodeURIComponent('Security verification failed: State token mismatch.'));
     }
 
     // Clean state verification token from session
     delete req.session.googleState;
 
     if (!code) {
-      return res.redirect('/login?error=' + encodeURIComponent('Google did not return an authorization code.'));
+      return res.redirect('/oauth/login?error=' + encodeURIComponent('Google did not return an authorization code.'));
     }
 
     // 3. Exchange authorization code for Google ID Token
@@ -103,12 +103,12 @@ router.get('/api/auth/federation/google/callback', async (req, res, next) => {
 
     const tokens = await tokenResponse.json();
     if (tokens.error) {
-      return res.redirect('/login?error=' + encodeURIComponent(`Google token exchange failed: ${tokens.error_description || tokens.error}`));
+      return res.redirect('/oauth/login?error=' + encodeURIComponent(`Google token exchange failed: ${tokens.error_description || tokens.error}`));
     }
 
     const idToken = tokens.id_token;
     if (!idToken) {
-      return res.redirect('/login?error=' + encodeURIComponent('Google response did not contain an ID Token.'));
+      return res.redirect('/oauth/login?error=' + encodeURIComponent('Google response did not contain an ID Token.'));
     }
 
     // 4. Verify Google ID Token signature and claims
@@ -122,13 +122,13 @@ router.get('/api/auth/federation/google/callback', async (req, res, next) => {
       payload = verification.payload;
     } catch (verifyErr) {
       console.error('[ERROR] Google ID Token verification failed:', verifyErr);
-      return res.redirect('/login?error=' + encodeURIComponent('Google ID Token validation failed.'));
+      return res.redirect('/oauth/login?error=' + encodeURIComponent('Google ID Token validation failed.'));
     }
 
-    const { sub, email, name, picture, email_verified } = payload;
+    const { email, name, picture } = payload;
 
     if (!email) {
-      return res.redirect('/login?error=' + encodeURIComponent('Google account must share an email address to proceed.'));
+      return res.redirect('/oauth/login?error=' + encodeURIComponent('Google account must share an email address to proceed.'));
     }
 
     // 5. Query existing user by email
@@ -144,34 +144,28 @@ router.get('/api/auth/federation/google/callback', async (req, res, next) => {
         name: name || null,
         avatarUrl: picture || null,
       });
-    } else {
-      // Proactively update name or avatar if updated on Google
-      if (picture && user.avatarUrl !== picture) {
-        // Optional path updates can be done here. Since the repository holds db models, we keep it simple.
-      }
     }
 
-    // 7. Establish clean administrator or OIDC session
+    // Ensure social login is only accessed during an active OIDC authorization flow (not directly for Admin Console)
+    if (!req.session.authRequest) {
+      return res.redirect('/login?error=' + encodeURIComponent('Social login cannot be used to access the Admin Console.'));
+    }
+
+    // 7. Establish clean OIDC session with strict non-admin status
     req.session.user = {
       id: user.id,
       email: user.email,
       name: user.name,
+      isAdmin: false, // strictly non-admin
     };
 
-    // 8. Redirect back to client OIDC flow context if active, otherwise load console dashboard
-    if (req.session.authRequest) {
-      const authParams = req.session.authRequest;
-      delete req.session.authRequest;
-      const q = new URLSearchParams(authParams).toString();
-      return req.session.save((err) => {
-        if (err) return next(err);
-        return res.redirect(`/authorize?${q}`);
-      });
-    }
-
+    // 8. Redirect back to client OIDC flow context
+    const authParams = req.session.authRequest;
+    delete req.session.authRequest;
+    const q = new URLSearchParams(authParams).toString();
     return req.session.save((err) => {
       if (err) return next(err);
-      return res.redirect(`${env.DASHBOARD_URL}/dashboard`);
+      return res.redirect(`/authorize?${q}`);
     });
   } catch (err) {
     next(err);

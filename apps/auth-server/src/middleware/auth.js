@@ -10,5 +10,13 @@ export function requireAuth(req, res, next) {
     });
   }
 
+  // Enforce administrative privileges to access dashboard resources
+  if (req.session.user.isAdmin !== true) {
+    return res.status(403).json({
+      error: 'Forbidden',
+      message: 'Access Denied. Administrative rights are required.',
+    });
+  }
+
   next();
 }

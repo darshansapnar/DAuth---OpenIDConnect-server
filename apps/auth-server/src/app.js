@@ -13,6 +13,7 @@ import { prisma } from '#config/db.js';
 import router from '#routes/index.js';
 import oidcRouter from './routes/oidc.js';
 import loginRouter from './routes/login.js';
+import oauthLoginRouter from './routes/oauthLogin.js';
 import consentRouter from './routes/consent.js';
 import registerRouter from './routes/register.js';
 import federationRouter from './routes/federation.js';
@@ -136,6 +137,7 @@ app.use(csrfProtection);
 // 8. Mount root-level portals (OIDC handshake and self-hosted Sign-In)
 app.use(oidcRouter);
 app.use(loginRouter);
+app.use(oauthLoginRouter);
 app.use(consentRouter);
 app.use(registerRouter);
 app.use(federationRouter);

@@ -9,7 +9,7 @@ router.get('/consent', async (req, res, next) => {
   try {
     // 1. Verify user session and cached authentication request context
     if (!req.session || !req.session.user || !req.session.authRequest) {
-      return res.redirect('/login');
+      return res.redirect('/oauth/login');
     }
 
     const { client_id: clientId, scope } = req.session.authRequest;
@@ -525,7 +525,7 @@ router.get('/consent', async (req, res, next) => {
 router.post('/consent', async (req, res, next) => {
   try {
     if (!req.session || !req.session.user || !req.session.authRequest) {
-      return res.redirect('/login');
+      return res.redirect('/oauth/login');
     }
 
     const { approval } = req.body;
