@@ -569,8 +569,8 @@ router.get('/oauth/login', async (req, res, next) => {
                 <circle cx="12" cy="16" r="1"></circle>
               </svg>
             </div>
-            <div class="brand-name">Sign in to continue</div>
-            <div class="brand-subtitle">Authenticate with your DAuth account to continue to <span class="client-highlight" style="font-weight:600;">${clientName}</span>.</div>
+            <div class="brand-name">DAuth</div>
+            <div class="brand-subtitle">Sign in to continue to <span class="client-highlight" style="font-weight:600;">${clientName}</span></div>
           </div>
 
           <!-- Alerts -->

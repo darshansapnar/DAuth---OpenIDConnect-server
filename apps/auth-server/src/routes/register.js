@@ -18,6 +18,7 @@ router.get('/register', (req, res) => {
   }
 
   const errorMessage = req.query.error ? decodeURIComponent(req.query.error) : '';
+  const loginUrl = (req.session && req.session.authRequest) ? '/oauth/login' : '/login';
 
   res.send(`
     <!DOCTYPE html>
@@ -610,7 +611,7 @@ router.get('/register', (req, res) => {
 
           <div class="footer-text">
             <span>Already have an account?</span>
-            <a href="/login">Sign In</a>
+            <a href="${loginUrl}">Sign In</a>
           </div>
         </div>
       </div>
@@ -679,8 +680,9 @@ router.post('/register', async (req, res, next) => {
     // 6. Create user using AuthService (hashes password with bcrypt automatically)
     await AuthService.register({ email, password, name });
 
-    // 7. Success redirect
-    return res.redirect('/login?success=' + encodeURIComponent('Account created successfully. Please sign in.'));
+    // 7. Success redirect (routing back to OIDC login or Admin login appropriately)
+    const successRedirectUrl = req.session.authRequest ? '/oauth/login' : '/login';
+    return res.redirect(`${successRedirectUrl}?success=` + encodeURIComponent('Account created successfully. Please sign in.'));
   } catch (err) {
     next(err);
   }
