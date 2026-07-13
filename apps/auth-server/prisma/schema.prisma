@@ -32,6 +32,7 @@ model OAuthClient {
   id                 String              @id @default(uuid())
   clientSecret       String
   name               String
+  clientType         String              @default("CONFIDENTIAL") // "CONFIDENTIAL" or "PUBLIC"
   redirectUris       String[]
   allowedScopes      String[]
   createdAt          DateTime            @default(now())

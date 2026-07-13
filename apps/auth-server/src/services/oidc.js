@@ -144,20 +144,36 @@ export class OidcService {
       throw err;
     }
 
-    // 3. Match Client Secret Hash
-    if (!clientSecret) {
-      const err = new Error('Missing parameter: client_secret is required.');
-      err.status = 401;
-      err.name = 'InvalidClient';
-      throw err;
-    }
-
-    const isSecretMatch = await bcrypt.compare(clientSecret, client.clientSecret);
-    if (!isSecretMatch) {
-      const err = new Error('Invalid client credentials.');
-      err.status = 401;
-      err.name = 'InvalidClient';
-      throw err;
+    // 3. Verify clientType constraints
+    if (client.clientType === 'CONFIDENTIAL') {
+      if (!clientSecret) {
+        const err = new Error('Missing parameter: client_secret is required for confidential clients.');
+        err.status = 401;
+        err.name = 'InvalidClient';
+        throw err;
+      }
+      const isSecretMatch = await bcrypt.compare(clientSecret, client.clientSecret);
+      if (!isSecretMatch) {
+        const err = new Error('Invalid client credentials.');
+        err.status = 401;
+        err.name = 'InvalidClient';
+        throw err;
+      }
+    } else if (client.clientType === 'PUBLIC') {
+      // Public clients must use PKCE
+      if (!codeVerifier) {
+        const err = new Error('Missing parameter: code_verifier is required for public clients.');
+        err.status = 400;
+        err.name = 'InvalidRequest';
+        throw err;
+      }
+      // Public clients must not send client secrets
+      if (clientSecret) {
+        const err = new Error('Invalid request: Public clients must not send a client_secret.');
+        err.status = 400;
+        err.name = 'InvalidRequest';
+        throw err;
+      }
     }
 
     // 4. Retrieve and Validate Authorization Code
@@ -333,20 +349,28 @@ export class OidcService {
       throw err;
     }
 
-    // 3. Match Client Secret Hash
-    if (!clientSecret) {
-      const err = new Error('Missing parameter: client_secret is required.');
-      err.status = 401;
-      err.name = 'InvalidClient';
-      throw err;
-    }
-
-    const isSecretMatch = await bcrypt.compare(clientSecret, client.clientSecret);
-    if (!isSecretMatch) {
-      const err = new Error('Invalid client credentials.');
-      err.status = 401;
-      err.name = 'InvalidClient';
-      throw err;
+    // 3. Verify clientType constraints for token refreshes
+    if (client.clientType === 'CONFIDENTIAL') {
+      if (!clientSecret) {
+        const err = new Error('Missing parameter: client_secret is required for confidential clients.');
+        err.status = 401;
+        err.name = 'InvalidClient';
+        throw err;
+      }
+      const isSecretMatch = await bcrypt.compare(clientSecret, client.clientSecret);
+      if (!isSecretMatch) {
+        const err = new Error('Invalid client credentials.');
+        err.status = 401;
+        err.name = 'InvalidClient';
+        throw err;
+      }
+    } else if (client.clientType === 'PUBLIC') {
+      if (clientSecret) {
+        const err = new Error('Invalid request: Public clients must not send a client_secret.');
+        err.status = 400;
+        err.name = 'InvalidRequest';
+        throw err;
+      }
     }
 
     // 4. Retrieve Refresh Token Record

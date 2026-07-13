@@ -235,7 +235,7 @@ export class OidcController {
         if (!allowedOrigins.includes(url.origin) && url.origin !== new URL(env.ISSUER).origin) {
           postLogoutRedirectUri = '/login';
         }
-      } catch (err) {
+      } catch {
         postLogoutRedirectUri = '/login';
       }
     }

@@ -1,164 +1,210 @@
-# 🔐 DAuth - OpenID Connect Identity Provider
+# 🔐 DAuth - Self-Hosted OpenID Connect Identity Provider
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js CI](https://github.com/dauth/dauth-monorepo/actions/workflows/node.js.yml/badge.svg)](https://github.com/dauth/dauth-monorepo/actions)
 
-**DAuth** is a self-hosted, production-ready **OpenID Connect (OIDC) Identity Provider** built from the ground up. It implements standard authentication and authorization protocol specifications with a highly legible, modular architecture. 
-
-Rather than relying on heavy third-party SaaS admin dashboards (like Auth0 or Clerk), DAuth serves as a clean, reference blueprint for developers wanting to master OAuth 2.0, OpenID Connect 1.0, PKCE validation, and cryptographic token management.
+**DAuth** is a production-inspired, self-hosted **OpenID Connect (OIDC) Identity Provider** built from the ground up with a modular, layered architecture. It serves as a secure authentication blueprint supporting standard OIDC flows, Proof Key for Code Exchange (PKCE), dynamic discovery, and built-in client SDKs.
 
 ---
 
-## ✨ Key Features
+## ✨ Features
 
-- **Authorization Code Flow:** Strict redirect-based authentication flow.
-- **Proof Key for Code Exchange (PKCE):** Secure PKCE flow utilizing SHA-256 verifiers (`S256`).
-- **Cryptographic Token Rotation & Signatures:** ID Tokens signed via `RS256` asymmetric keys.
-- **Discovery Endpoint:** Compliant standard `GET /.well-known/openid-configuration`.
-- **JWKS Endpoint:** Serves JSON Web Key Set (`GET /jwks`) mapping to active keys.
-- **Replay Attack Protections:** Revokes all active refresh tokens for the user/client pair if an authorization code is re-submitted.
-- **Double-Submit CSRF Cookies:** Custom state-changing request checks.
-- **Google Identity Federation:** Supports OIDC account linking directly with Google out of the box.
+* **Authorization Code Flow + PKCE (RFC 7636):** Secure redirect-based handshake with automatic SHA-256 verifiers, tailored for public and confidential clients.
+* **OIDC Client Types:** Distinguishes between `PUBLIC` clients (SPAs/Mobile apps - secret-free PKCE-enforced) and `CONFIDENTIAL` clients (Server-side backends - requiring client secret verification).
+* **Asymmetric RS256 JWTs:** ID Tokens are signed using RSA key pairs, with public keys exposed via JWKS.
+* **Automatic Token Rotation:** Full support for OAuth 2.0 refresh tokens, with automated token refreshing in client libraries before access token expiry.
+* **OIDC Discovery & JWKS:** Built-in dynamic configuration mapping (`/.well-known/openid-configuration`) and signature validation key lists (`/jwks`).
+* **Google Identity Federation:** Integrated Google social login linking directly out of the box.
+* **Security Hardening:** Single-use authorization codes, Double-Submit CSRF cookies, dynamic CORS origins checking, and replay-attack protection (revokes all refresh tokens on code reuse).
 
 ---
 
 ## 🏗 System Architecture
 
-DAuth separates HTTP layers from database interactions and business logic:
+DAuth separates HTTP layers from database interactions and business logic across clean workspaces:
 
 ```mermaid
 graph TD
-    Client[Sample Client App] -->|Authorization Request| Auth[DAuth Server]
-    Auth -->|Validates Request| Routes
+    Client[Relying Client Application] -->|1. OIDC Requests| Auth[DAuth Auth Server]
+    Auth -->|2. Route Handler| Routes
     Routes --> Controllers
     Controllers --> Services
     Services --> Repositories
-    Repositories --> DB[(PostgreSQL)]
+    Repositories --> DB[(Neon PostgreSQL)]
     
     Auth -.->|Federated Login| Google[Google IDP]
     Admin[Admin Dashboard] -->|Manage Users & Clients| Auth
 ```
 
-### 🗂 Folder Structure
-
-```
-dauth-monorepo/
-├── apps/
-│   ├── auth-server/         # Node.js/Express.js Backend API
-│   ├── dashboard/           # React + Vite Admin Console
-│   └── sample-client/       # React + Vite Relying Party Client
-├── packages/
-│   ├── ui/                  # Shared React UI components
-│   └── shared/              # Shared helper functions
-├── docs/                    # Architectural and API documentation
-└── .env.example             # Environment templates
-```
+### 🗂 Workspace Packages
+* **`apps/auth-server`**: Express.js backend exposing RESTful OIDC routes and administrative controls.
+* **`apps/dashboard`**: React + Vite administrator management console (seeding and registering OAuth clients).
+* **`apps/sample-client`**: React + Vite playground client demonstrating end-to-end integration.
+* **`packages/sdk`**: Reusable, framework-agnostic Vanilla JS client SDK.
+* **`packages/react`**: Reusable React Context and hook library wrapper.
+* **`packages/ui`** & **`packages/shared`**: Reusable design blocks and crypto helpers.
 
 ---
 
-## 🔒 OpenID Connect & PKCE Flow
-
-DAuth strictly follows the OAuth 2.0 and OpenID Connect specifications to secure single-page applications:
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant Client as Sample Client
-    participant DAuth as Auth Server
-    participant DB as PostgreSQL
-
-    User->>Client: Clicks "Login"
-    Client->>Client: Generate PKCE (Verifier & Challenge)
-    Client->>DAuth: GET /authorize (client_id, code_challenge, state)
-    DAuth->>User: Redirects to Login / Consent UI
-    User->>DAuth: Submits Credentials & Approves Scopes
-    DAuth->>DB: Save short-lived Authorization Code
-    DAuth->>Client: Redirect with (code, state)
-    Client->>DAuth: POST /token (code, code_verifier)
-    DAuth->>DB: Verify Code & PKCE Verifier match
-    DAuth->>Client: Issues Access Token, ID Token, Refresh Token
-    Client->>User: Grants access based on ID Token claims
-```
-
-### What is PKCE?
-**PKCE** (Proof Key for Code Exchange) is an extension to the Authorization Code flow that prevents malicious applications from intercepting an authorization code and exchanging it for tokens. It achieves this by forcing the client to dynamically generate a cryptographic secret (`code_verifier`) and pass a hash of it (`code_challenge`) during the initial authorization step.
-
----
-
-## 🖼 Screenshots
-*(Placeholders - Add screenshots of the Login, Consent, and Dashboard panels here)*
-
-![Login Page](docs/assets/login-placeholder.png)
-![Admin Dashboard](docs/assets/dashboard-placeholder.png)
-
----
-
-## 🚀 Installation & Setup
-
-### Prerequisites
-- Node.js 18+
-- PostgreSQL database instance
+## 🚀 Installation & Local Development
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/yourusername/dauth.git
-cd dauth
+git clone https://github.com/darshansapnar/DAuth---OpenIDConnect-server.git
+cd DAuth---OpenIDConnect-server
 npm install
 ```
 
-### 2. Environment Setup
-```bash
-cp .env.example .env
+### 2. Configure Environment
+Create a `.env` file at the root:
+```env
+DATABASE_URL="postgresql://user:pass@host/neondb?sslmode=require"
+SESSION_SECRET="your-express-session-cookie-secret"
+GOOGLE_CLIENT_ID="optional-google-oauth-client-id"
+GOOGLE_CLIENT_SECRET="optional-google-oauth-client-secret"
 ```
-Ensure your `.env` file contains your local `DATABASE_URL` and `SESSION_SECRET`. No API keys or secrets should ever be committed to version control.
 
-### 3. Database Setup (Prisma)
-Sync your PostgreSQL database schema with Prisma and seed the default administrator user:
+### 3. Setup Database (Prisma)
+Sync schemas and seed default administrative credentials (`admin@dauth.io` / `AdminPass123`):
 ```bash
 npx prisma db push --schema=apps/auth-server/prisma/schema.prisma
-npx prisma db seed --schema=apps/auth-server/prisma/schema.prisma
+node apps/auth-server/prisma/seed.js
 ```
 
-### 4. Running the Project
-Start the development servers for all three workspace directories concurrently:
+### 4. Start Local Environment
 ```bash
 npm run dev
 ```
-
-- **Auth Server:** `http://localhost:3001`
-- **Dashboard Console:** `http://localhost:5173`
-- **Sample Client:** `http://localhost:5174`
-
----
-
-## 📡 API Endpoints
-
-### OpenID Connect Endpoints
-- `GET /.well-known/openid-configuration` - Discovery document metadata.
-- `GET /authorize` - Interactive authorization flow.
-- `POST /token` - Swaps authorization codes or refresh tokens for tokens.
-- `GET /jwks` - Returns public keys for signature verification.
-- `GET/POST /userinfo` - Returns profile claims for authorized tokens.
-
-*For detailed endpoints and request formatting, please refer to the `docs/api-reference.md`.*
+* **Auth Server**: `http://localhost:3001`
+* **Admin Dashboard**: `http://localhost:5173/dashboard/`
+* **Sample Client**: `http://localhost:5174/`
 
 ---
 
-## ☁️ Deployment Instructions
-
-1. **Database:** Deploy PostgreSQL via Neon, AWS RDS, or Supabase.
-2. **Backend:** Deploy the `auth-server` application to a Node.js runtime (Render, Heroku, or AWS EC2). Ensure `NODE_ENV=production` is set to enforce secure cookies.
-3. **Frontend:** Run `npm run build` at the monorepo root. Deploy the resulting `dist/` folders for the `dashboard` and `sample-client` to a static hosting provider (Vercel, Netlify, AWS S3).
-4. **Environment Variables:** Update `ALLOWED_ORIGINS` and `ISSUER` in production to match your live domains.
+## 📋 Registering OAuth Clients
+1. Log in to the **Admin Dashboard** (`http://localhost:5173/dashboard/`).
+2. Navigate to **Clients** -> **Create Client**.
+3. Choose the appropriate Client Type:
+   * **`PUBLIC`**: Select for Single-Page React/Vite/Vue apps or Mobile applications. Secrets are disallowed, and PKCE is enforced.
+   * **`CONFIDENTIAL`**: Select for Node.js, Python, or Go backend servers. Requires presenting the client secret.
+4. Input valid **Redirect URIs** (e.g. `http://localhost:5174/callback`) and allow target scopes.
 
 ---
 
-## 🔮 Future Improvements
-- **Dynamic Client Registration:** Support for RFC 7591 dynamic endpoints.
-- **Dynamic PKCE enforcement:** Selectively enforce PKCE checks per client type.
-- **Client Credentials Grant:** Support machine-to-machine server integrations.
+## 📦 SDK Integration
+
+### 1. Vanilla JavaScript SDK (`@dauth/sdk`)
+Install or link `@dauth/sdk` in your application.
+
+```javascript
+import { DAuthClient } from '@dauth/sdk';
+
+const dauth = new DAuthClient({
+  issuer: "http://localhost:3001",
+  clientId: "dauth_cli_sample_client",
+  redirectUri: "http://localhost:5174/callback",
+  scope: "openid profile email",
+  // storage: window.sessionStorage // Optional custom storage (defaults to localStorage)
+});
+
+// Triggers login and redirects to DAuth Authorization Server
+await dauth.loginWithRedirect();
+
+// Handles callback code swap (run on your callback/redirect URI page)
+const session = await dauth.handleRedirectCallback();
+console.log("Logged in user:", session.userInfo);
+
+// Retrieve active tokens & profiles
+const token = await dauth.getAccessToken(); // Automatically refreshes token if expired!
+const idClaims = dauth.getIdTokenClaims(); // Decoded JWT profile details
+const isAuthed = dauth.isAuthenticated();
+
+// Logout
+await dauth.logout();
+```
+
+### 2. React SDK (`@dauth/react`)
+Wrap your application in `DAuthProvider` to expose hooks and route guards.
+
+#### Wrap Router:
+```jsx
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { DAuthProvider } from '@dauth/react';
+import Dashboard from './Dashboard';
+import Callback from './Callback';
+
+export default function App() {
+  return (
+    <DAuthProvider
+      issuer="http://localhost:3001"
+      clientId="dauth_cli_sample_client"
+      redirectUri={`${window.location.origin}/callback`}
+      scope="openid profile email"
+    >
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/callback" element={<Callback />} />
+        </Routes>
+      </BrowserRouter>
+    </DAuthProvider>
+  );
+}
+```
+
+#### Hook Usage:
+```jsx
+import { useDAuth } from '@dauth/react';
+
+export default function Profile() {
+  const { user, isAuthenticated, loginWithRedirect, logout } = useDAuth();
+
+  if (!isAuthenticated) {
+    return <button onClick={loginWithRedirect}>Login</button>;
+  }
+
+  return (
+    <div>
+      <p>Hello, {user.name}!</p>
+      <button onClick={logout}>Sign Out</button>
+    </div>
+  );
+}
+```
+
+#### Protected Routes (Declarative Guard):
+```jsx
+import { ProtectedRoute } from '@dauth/react';
+
+// Automatically redirects user to login if unauthenticated
+<Route 
+  path="/private-dashboard" 
+  element={
+    <ProtectedRoute>
+      <PrivateDashboard />
+    </ProtectedRoute>
+  } 
+/>
+```
+
+---
+
+## 🔒 Security Specifications
+
+* **Proof Key for Code Exchange (PKCE)**: Implements SHA-256 Base64URL challenge hashing to prevent code interception attacks on public clients.
+* **Double-Submit Cookie CSRF Checks**: State-changing endpoints are reinforced using double-submit matching session validation check blocks.
+* **CORS Whitelist Protection**: Dynamic origin checking allows local preview parameters (Vercel wildcard domains) without opening endpoints globally.
+* **Replay & Session Revocation**: Tracks authorization code usage; attempts to reuse authorization codes immediately invalidate all tokens associated with the client/user pair.
+
+---
+
+## ☁️ Production Deployment
+
+1. **Prerequisites**: Provision Neon PostgreSQL database clusters.
+2. **Auth Server (Render)**: Set the `NODE_ENV=production` environment variable to ensure Express.js utilizes secure HTTPS-only cookies. Maintain matching `ISSUER` configurations.
+3. **Frontend (Vercel)**: Compile bundles (`npm run build`) and point the Vercel project deployment target directories to the `dist/` folders.
 
 ---
 
 ## 📜 License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License.

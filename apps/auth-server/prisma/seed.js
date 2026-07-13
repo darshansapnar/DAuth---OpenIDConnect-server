@@ -34,11 +34,13 @@ async function main() {
     update: {
       redirectUris: ['http://localhost:5174/callback', 'http://localhost:5173/playground'],
       allowedScopes: ['openid', 'profile', 'email', 'offline_access'],
+      clientType: 'PUBLIC',
     },
     create: {
       id: clientId,
       name: clientName,
       clientSecret: secretHash,
+      clientType: 'PUBLIC',
       redirectUris: ['http://localhost:5174/callback', 'http://localhost:5173/playground'],
       allowedScopes: ['openid', 'profile', 'email', 'offline_access'],
     },

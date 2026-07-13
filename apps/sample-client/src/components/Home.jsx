@@ -1,96 +1,31 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useDAuth } from '@dauth/react';
 import { Button } from '@dauth/ui';
 
-// Helper to decode OIDC ID token JWT payloads on the client side
-function decodeJwt(token) {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      window
-        .atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    return JSON.parse(jsonPayload);
-  } catch (e) {
-    console.error('Failed to decode ID Token JWT:', e);
-    return null;
-  }
-}
-
-// Generates a high-entropy cryptographically random verifier string
-function generateCodeVerifier() {
-  const array = new Uint8Array(43); // Min required length is 43 characters
-  window.crypto.getRandomValues(array);
-  return Array.from(array, (dec) => dec.toString(16).padStart(2, '0'))
-    .join('')
-    .slice(0, 128); // Standardize verifier length
-}
-
-// Generates an S256 Base64URL-encoded code challenge from the verifier
-async function generateCodeChallenge(verifier) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(verifier);
-  const digest = await window.crypto.subtle.digest('SHA-256', data);
-  return btoa(String.fromCharCode(...new Uint8Array(digest)))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
-}
-
-const AUTH_SERVER_URL = import.meta.env.VITE_AUTH_SERVER_URL || 'http://localhost:3001';
-
 export default function Home() {
-  const [session, setSession] = useState(null);
+  const {
+    user,
+    isAuthenticated,
+    isLoading,
+    loginWithRedirect,
+    logout,
+    getIdTokenClaims,
+    getTokens,
+  } = useDAuth();
 
-  useEffect(() => {
-    const stored = localStorage.getItem('dauth_session');
-    if (stored) {
-      try {
-        setSession(JSON.parse(stored));
-      } catch {
-        localStorage.removeItem('dauth_session');
-      }
-    }
-  }, []);
+  const idTokenClaims = isAuthenticated ? getIdTokenClaims() : null;
+  const tokens = isAuthenticated ? getTokens() : null;
 
-  const handleLogin = async () => {
-    // Generate secure cryptographically random state parameter
-    const array = new Uint8Array(16);
-    window.crypto.getRandomValues(array);
-    const state = Array.from(array, (dec) => dec.toString(16).padStart(2, '0')).join('');
-
-    // Persist state in localStorage for validation during OIDC Callback phase
-    localStorage.setItem('dauth_oauth_state', state);
-
-    // PKCE parameters generation
-    const verifier = generateCodeVerifier();
-    localStorage.setItem('dauth_oauth_verifier', verifier);
-    const challenge = await generateCodeChallenge(verifier);
-
-    // Build OIDC authorization request URL with PKCE params
-    const authUrl = new URL(`${AUTH_SERVER_URL}/authorize`);
-    authUrl.searchParams.append('client_id', 'dauth_cli_sample_client');
-    authUrl.searchParams.append('redirect_uri', `${window.location.origin}/callback`);
-    authUrl.searchParams.append('response_type', 'code');
-    authUrl.searchParams.append('scope', 'openid profile email');
-    authUrl.searchParams.append('state', state);
-    authUrl.searchParams.append('code_challenge', challenge);
-    authUrl.searchParams.append('code_challenge_method', 'S256');
-
-    // Redirect browser to DAuth Authorization Server GET /authorize
-    window.location.href = authUrl.toString();
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('dauth_session');
-    setSession(null);
-    window.location.href = `${AUTH_SERVER_URL}/logout?post_logout_redirect_uri=${window.location.origin}/`;
-  };
-
-  const idTokenClaims = session?.tokens?.id_token ? decodeJwt(session.tokens.id_token) : null;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#05050A] flex flex-col items-center justify-center p-4 text-center">
+        <div className="space-y-4">
+          <div className="h-10 w-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <p className="text-sm text-zinc-400 font-medium">Loading session profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#05050A] flex flex-col font-sans text-zinc-50 relative overflow-hidden">
@@ -105,12 +40,12 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <span className="text-xl">🧪</span>
             <span className="font-bold text-zinc-100 tracking-tight text-sm">
-              Sample OIDC Client Application
+              Sample OIDC Client Application (SDK Powered)
             </span>
           </div>
           <div className="flex items-center gap-4">
-            {session && (
-              <Button variant="secondary" size="sm" onClick={handleLogout} className="!bg-zinc-800 !text-white !border-white/10 hover:!bg-zinc-700">
+            {isAuthenticated && (
+              <Button variant="secondary" size="sm" onClick={logout} className="!bg-zinc-800 !text-white !border-white/10 hover:!bg-zinc-700">
                 Logout
               </Button>
             )}
@@ -119,7 +54,7 @@ export default function Home() {
       </header>
 
       <main className="flex-1 flex flex-col justify-center max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8 w-full relative z-10">
-        {!session ? (
+        {!isAuthenticated ? (
           <div className="relative w-full max-w-lg mx-auto group animate-fadeIn">
             {/* Soft background glow behind the card */}
             <div className="absolute -inset-[1px] bg-gradient-to-b from-indigo-500/30 to-purple-500/10 rounded-2xl blur-md opacity-70 group-hover:opacity-100 transition duration-700 -z-10"></div>
@@ -145,12 +80,12 @@ export default function Home() {
               <div className="h-[2px] w-12 bg-indigo-500/50 mx-auto rounded-full mb-6 relative z-10"></div>
 
               <p className="text-zinc-400 text-sm sm:text-base mb-10 leading-relaxed max-w-xs mx-auto relative z-10">
-                Authenticate securely using DAuth with OAuth 2.0 Authorization Code Flow and PKCE.
+                Authenticate securely using the DAuth SDK with OAuth 2.0 Authorization Code Flow and PKCE.
               </p>
 
               {/* Action Button */}
               <div className="relative z-10">
-                <Button variant="primary" size="lg" className="w-full !bg-indigo-600 hover:!bg-indigo-500 transition-all duration-300 shadow-[0_0_20px_-5px_rgba(79,70,229,0.4)] border border-indigo-400/20 text-white font-medium tracking-wide flex items-center justify-center gap-2 py-6 rounded-xl hover:shadow-[0_0_25px_-5px_rgba(79,70,229,0.6)]" onClick={handleLogin}>
+                <Button variant="primary" size="lg" className="w-full !bg-indigo-600 hover:!bg-indigo-500 transition-all duration-300 shadow-[0_0_20px_-5px_rgba(79,70,229,0.4)] border border-indigo-400/20 text-white font-medium tracking-wide flex items-center justify-center gap-2 py-6 rounded-xl hover:shadow-[0_0_25px_-5px_rgba(79,70,229,0.6)]" onClick={loginWithRedirect}>
                   <svg className="w-5 h-5 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
@@ -176,7 +111,7 @@ export default function Home() {
             <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-lg p-4 flex items-center gap-3">
               <span className="text-emerald-500 dark:text-emerald-400 text-lg">✔</span>
               <p className="text-emerald-800 dark:text-emerald-400 text-sm font-semibold">
-                OIDC Handshake Completed successfully!
+                OIDC Handshake Completed successfully via SDK!
               </p>
             </div>
 
@@ -191,19 +126,19 @@ export default function Home() {
                   <div>
                     <dt className="text-gray-400 dark:text-zinc-500 font-medium">Subject Identifier (sub)</dt>
                     <dd className="mt-1 font-mono text-xs text-indigo-600 dark:text-indigo-400 select-all">
-                      {session.userInfo.sub}
+                      {user.sub}
                     </dd>
                   </div>
                   <div>
                     <dt className="text-gray-400 dark:text-zinc-500 font-medium">Full Name</dt>
                     <dd className="mt-1 text-gray-900 dark:text-zinc-100 font-semibold">
-                      {session.userInfo.name || 'Not provided'}
+                      {user.name || 'Not provided'}
                     </dd>
                   </div>
                   <div>
                     <dt className="text-gray-400 dark:text-zinc-500 font-medium">Email Address</dt>
                     <dd className="mt-1 text-gray-900 dark:text-zinc-100 font-mono">
-                      {session.userInfo.email}
+                      {user.email}
                     </dd>
                   </div>
                 </dl>
@@ -232,7 +167,7 @@ export default function Home() {
                 Raw Token Endpoint Response (/token)
               </h3>
               <div className="bg-gray-950 text-emerald-400 p-4 rounded-lg font-mono text-xs overflow-x-auto shadow-inner">
-                <pre>{JSON.stringify(session.tokens, null, 2)}</pre>
+                <pre>{JSON.stringify(tokens, null, 2)}</pre>
               </div>
             </div>
           </div>

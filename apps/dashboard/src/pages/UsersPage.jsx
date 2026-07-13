@@ -53,7 +53,7 @@ export default function UsersPage() {
 
         const data = await res.json();
         setUsers(data.users || []);
-      } catch (err) {
+      } catch {
         // Network errors, CORS failures, or server unreachable
         setError(
           'Unable to connect to the DAuth server. Please check your connection or try again later.'
