@@ -62,12 +62,12 @@ export default function Home() {
     window.crypto.getRandomValues(array);
     const state = Array.from(array, (dec) => dec.toString(16).padStart(2, '0')).join('');
 
-    // Persist state in sessionStorage for validation during OIDC Callback phase
-    sessionStorage.setItem('dauth_oauth_state', state);
+    // Persist state in localStorage for validation during OIDC Callback phase
+    localStorage.setItem('dauth_oauth_state', state);
 
     // PKCE parameters generation
     const verifier = generateCodeVerifier();
-    sessionStorage.setItem('dauth_oauth_verifier', verifier);
+    localStorage.setItem('dauth_oauth_verifier', verifier);
     const challenge = await generateCodeChallenge(verifier);
 
     // Build OIDC authorization request URL with PKCE params

@@ -39,9 +39,9 @@ export default function Callback() {
         return;
       }
 
-      // 2. Validate state against sessionStorage parameter to mitigate CSRF
-      const cachedState = sessionStorage.getItem('dauth_oauth_state');
-      const verifier = sessionStorage.getItem('dauth_oauth_verifier');
+      // 2. Validate state against localStorage parameter to mitigate CSRF
+      const cachedState = localStorage.getItem('dauth_oauth_state');
+      const verifier = localStorage.getItem('dauth_oauth_verifier');
       if (!cachedState || cachedState !== state) {
         setError('Security validation failed: State parameter mismatch (CSRF threat detected).');
         return;
@@ -93,8 +93,8 @@ export default function Callback() {
             userInfo,
           })
         );
-        sessionStorage.removeItem('dauth_oauth_state');
-        sessionStorage.removeItem('dauth_oauth_verifier');
+        localStorage.removeItem('dauth_oauth_state');
+        localStorage.removeItem('dauth_oauth_verifier');
 
         // Navigate back to the home page
         navigate('/');
