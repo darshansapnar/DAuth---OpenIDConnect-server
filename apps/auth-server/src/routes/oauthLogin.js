@@ -668,6 +668,9 @@ router.get('/oauth/login', async (req, res, next) => {
     </body>
     </html>
   `);
+  } catch (err) {
+    next(err);
+  }
 });
 
 // POST /oauth/login - Processes user credentials and redirects back to authorize
