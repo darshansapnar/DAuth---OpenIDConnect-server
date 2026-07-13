@@ -1,32 +1,49 @@
 import { Router } from 'express';
 import { AuthService } from '#services/auth.js';
+import { ClientRepository } from '#repositories/client.js';
 import { env } from '#config/env.js';
 
 const router = Router();
 
 // GET /oauth/login - Renders the client-hosted OIDC login view
-router.get('/oauth/login', (req, res) => {
-  // Clear the active user session if Switch Account is requested
-  if (req.query.error && req.query.error.startsWith('Switch')) {
-    if (req.session) {
-      delete req.session.user;
+router.get('/oauth/login', async (req, res, next) => {
+  try {
+    // Clear the active user session if Switch Account is requested
+    if (req.query.error && req.query.error.startsWith('Switch')) {
+      if (req.session) {
+        delete req.session.user;
+      }
     }
-  }
 
-  // If already authenticated, redirect back to OIDC authorization
-  if (req.session && req.session.user) {
-    if (req.session.authRequest) {
-      const q = new URLSearchParams(req.session.authRequest).toString();
-      return res.redirect(`/authorize?${q}`);
+    // If already authenticated, redirect back to OIDC authorization
+    if (req.session && req.session.user) {
+      if (req.session.authRequest) {
+        const q = new URLSearchParams(req.session.authRequest).toString();
+        return res.redirect(`/authorize?${q}`);
+      }
+      return res.redirect(`${env.DASHBOARD_URL}/dashboard`);
     }
-    return res.redirect(`${env.DASHBOARD_URL}/dashboard`);
-  }
 
-  const errorMessage = req.query.error ? decodeURIComponent(req.query.error) : '';
-  const successMessage = req.query.success ? decodeURIComponent(req.query.success) : '';
+    const errorMessage = req.query.error ? decodeURIComponent(req.query.error) : '';
+    const successMessage = req.query.success ? decodeURIComponent(req.query.success) : '';
 
-  // Google Identity Federation configuration status check
-  const googleEnabled = !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
+    // Fetch the client details to display on the OIDC login screen
+    let clientName = 'your application';
+    const authRequest = req.session.authRequest || {};
+    const clientId = authRequest.client_id;
+    if (clientId) {
+      try {
+        const client = await ClientRepository.findById(clientId);
+        if (client) {
+          clientName = client.name;
+        }
+      } catch (err) {
+        console.error('[SERVER] Failed to query client details for OIDC login view:', err);
+      }
+    }
+
+    // Google Identity Federation configuration status check
+    const googleEnabled = !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
 
   res.send(`
     <!DOCTYPE html>
@@ -207,6 +224,10 @@ router.get('/oauth/login', (req, res) => {
           margin-top: 0.25rem;
           font-weight: 400;
           transition: color 0.4s ease;
+        }
+
+        .client-highlight {
+          color: #2563eb;
         }
 
         /* ─── Forms ─── */
@@ -455,6 +476,7 @@ router.get('/oauth/login', (req, res) => {
         }
         .dark .brand-name { color: #ffffff; }
         .dark .brand-subtitle { color: #71717a; }
+        .dark .client-highlight { color: #818cf8; }
         .dark .label { color: #a1a1aa; }
         .dark .input {
           background-color: #060608;
@@ -547,8 +569,8 @@ router.get('/oauth/login', (req, res) => {
                 <circle cx="12" cy="16" r="1"></circle>
               </svg>
             </div>
-            <div class="brand-name">DAuth</div>
-            <div class="brand-subtitle">OpenID Connect Identity Provider</div>
+            <div class="brand-name">Sign in to continue</div>
+            <div class="brand-subtitle">Authenticate with your DAuth account to continue to <span class="client-highlight" style="font-weight:600;">${clientName}</span>.</div>
           </div>
 
           <!-- Alerts -->
