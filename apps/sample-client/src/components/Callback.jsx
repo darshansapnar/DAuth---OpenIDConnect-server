@@ -19,6 +19,12 @@ export default function Callback() {
     executionRef.current = true;
 
     async function handleCallback() {
+      // If session is already completed and cached, bypass and navigate home
+      if (localStorage.getItem('dauth_session')) {
+        navigate('/');
+        return;
+      }
+
       // Check if server returned an error parameter
       const urlError = searchParams.get('error');
       const urlErrorDescription = searchParams.get('error_description');
