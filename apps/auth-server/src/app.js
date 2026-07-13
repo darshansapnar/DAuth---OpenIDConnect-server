@@ -93,8 +93,13 @@ app.use(
       if (env.NODE_ENV !== 'production') {
         console.log('[DEBUG] CORS Check:', { origin, allowedOrigins });
       }
-      // Allow non-browser agents (Curl, server-to-server OIDC token query), Same-Origin/Redirect 'null' origins, or matching origins
-      if (!origin || origin === 'null' || allowedOrigins.includes(origin)) {
+      
+      const isVercelPreview = origin && (
+        origin.startsWith('https://sample-client-') && origin.endsWith('.vercel.app')
+      );
+
+      // Allow non-browser agents, Same-Origin 'null' origins, matching config origins, or Vercel preview deployments
+      if (!origin || origin === 'null' || allowedOrigins.includes(origin) || isVercelPreview) {
         callback(null, true);
       } else {
         callback(new Error('Blocked by CORS policy. Origin not allowed.'));
